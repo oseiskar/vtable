@@ -7,7 +7,8 @@
       :style="{
           left: `${draggablePosition.x}px`,
           top: `${draggablePosition.y}px`,
-          background: dragActive ? 'blue' : null
+          background: dragActive ? 'blue' : null,
+          'z-index': dragActive ? 1e10: zindex
       }">
     sdfglk {{ id }}
   </Moveable>
@@ -19,7 +20,7 @@ module.exports = {
   components: {
     Moveable
   },
-  props: [ 'id', 'position' ],
+  props: [ 'id', 'position', 'zindex' ],
   data: () => ({
     moveable: {
       draggable: true,
@@ -48,13 +49,14 @@ module.exports = {
     },
     dragEnd({ target }) {
       this.dragActive = false;
-      this.$store.commit('move', {
+      this.$store.commitTagged('move', {
         tokenId: this.id,
         properties: {
-          position: this.localPosition
+          position: this.localPosition,
+          zindex: this.$store.nextZIndex()
         }
       });
     }
-  },
+  }
 };
 </script>

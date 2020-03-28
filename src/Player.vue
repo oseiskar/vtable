@@ -1,7 +1,9 @@
 <template>
-<div class="player"></div>
+<div class="player">{{ name }}</div>
 </template>
 
 <script>
-module.exports = {}
+module.exports = {
+  props: [ 'id', 'name' ],
+}
 </script>
