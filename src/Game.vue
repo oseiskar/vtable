@@ -1,5 +1,5 @@
 <template>
-  <div class="app">
+  <div class="app" >
     <div class="board">
       <Token v-bind="token" v-for="token in tokens" :key="token.id"></Token>
     </div>
@@ -34,20 +34,22 @@ module.exports = {
   }),
   props: [ 'identity' ],
   computed: mapState({
-    players: 'players',
-    tokens: 'tokens',
-    name: 'name'
+    players: state => state.game.players,
+    tokens: state => state.game.tokens,
+    name: state => state.game && state.game.name
   }),
   methods: {
     join() {
       this.$store.commitTagged('addPlayer', {
-        id: this.$props.id,
+        id: this.$props.identity.id,
         name: this.nameInput
       });
     }
   },
-  created() {
-    document.title = `${this.$store.state.name} | vtable`;
+  watch: {
+    name() {
+      document.title = `${this.$store.state.game.name} | vtable`;
+    }
   }
 };
 </script>

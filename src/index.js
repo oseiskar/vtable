@@ -11,7 +11,6 @@ function start() {
   function startGame(initialState) {
     const playerId = uuid.v4();
     const store = Store(playerId, initialState);
-
     const app = new Vue({
       el: '#app',
       store,
@@ -22,7 +21,12 @@ function start() {
         }
       }),
       components: { Game },
-      template: '<Game v-bind:identity="identity"></Game>'
+      template: '<Game v-bind:identity="identity"></Game>',
+      created() {
+        store.doInit().then(() => {
+          console.log('Init success');
+        });
+      }
     });
 
     store.subscribeTagged((type, payload) => {
