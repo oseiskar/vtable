@@ -1,7 +1,7 @@
 <template>
   <div class="app" >
     <div class="board">
-      <Token v-bind="token" v-for="token in tokens" :key="token.id"></Token>
+      <Token v-bind="token" v-for="token in tokens" :key="token.id" v-on:move-token="moveToken"></Token>
     </div>
     <div class="players">
       <Player v-bind="player" v-for="player in players" :key="player.id"></Player>
@@ -35,11 +35,18 @@ const Token = require('./Token.vue').default;
 module.exports = {
   components: { Token, Player },
   data: () => ({
-    nameInput: '',
+    nameInput: ''
   }),
   props: [ 'identity' ],
   computed: {
     link() { return window.location.href; },
+    maxZIndex() {
+      let maxIndex = 0;
+      Object.values(this.tokens).forEach(token => {
+        maxIndex = Math.max(maxIndex, token.zindex);
+      });
+      return maxIndex;
+    },
     ...mapState({
       id: state => state.game && state.game.id,
       players: state => state.game.players,
@@ -50,6 +57,15 @@ module.exports = {
   methods: {
     join() {
       this.$emit('join-game', { name: this.nameInput });
+    },
+    moveToken({ tokenId, position }) {
+      this.$store.commitTagged('move', {
+        tokenId,
+        properties: {
+          position,
+          zindex: this.maxZIndex + 1
+        }
+      });
     }
   },
   watch: {

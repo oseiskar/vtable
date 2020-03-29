@@ -102,12 +102,9 @@ module.exports = (playerId, initialState, gameId) => {
       // console.log(payload);
       store.commit(mutationType, payload);
     };
-    let maxZIndex = 10000;
-    store.subscribeTagged = (func) => {
+
+    /*  store.subscribeTagged = (func) => {
       store.subscribe(({ type, payload }) => {
-        // hacky
-        const zindex = (payload.properties && payload.properties.zindex) || 0;
-        maxZIndex = Math.max(maxZIndex, zindex);
         if (payload.source === playerId) {
           func(type, payload);
         }
@@ -115,14 +112,13 @@ module.exports = (playerId, initialState, gameId) => {
     };
 
     // Example
-    /* store.subscribeTagged((type, payload) => {
+    store.subscribeTagged((type, payload) => {
       if (type === 'addPlayer') {
         app.identity.name = payload.name;
       }
       // console.log({ type, payload });
     }); */
 
-    store.nextZIndex = () => maxZIndex + 1;
     return store;
   });
 };

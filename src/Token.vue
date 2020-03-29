@@ -2,13 +2,14 @@
   <Moveable
       class="moveable game-card"
       v-bind="moveable"
-      @drag="drag"
+      @drag="dragMove"
       @dragEnd="dragEnd"
+      @dragStart="dragStart"
       :style="{
           left: `${draggablePosition.x}px`,
           top: `${draggablePosition.y}px`,
-          background: dragActive ? 'blue' : null,
-          'z-index': dragActive ? 1e10: zindex
+          background: drag.active ? 'blue' : null,
+          'z-index': drag.active ? 1e10 : zindex
       }">
     sdfglk {{ id }}
   </Moveable>
@@ -29,32 +30,36 @@ module.exports = {
       scalable: false,
       rotatable: false
     },
-    localPosition: { x: 0, y: 0 },
-    dragActive: false
+    drag: {
+      position: { x: 0, y: 0 },
+      zindex: -1,
+      active: false
+    }
   }),
   computed: {
     draggablePosition() {
-      if (this.dragActive) return this.localPosition;
+      if (this.drag.active || this.zindex === this.drag.zindex) return this.drag.position;
       return this.position;
     }
   },
   methods: {
-    drag({ target, left, top }) {
+    dragStart({ target }) {
+      this.drag.active = true;
+      this.drag.zindex = this.zindex;
+      this.drag.position = { ...this.position };
+    },
+    dragMove({ target, left, top }) {
       //console.log('onDrag left, top', left, top);
-      this.dragActive = true;
-      this.localPosition = {
+      this.drag.position = {
         x: left,
         y: top
       };
     },
     dragEnd({ target }) {
-      this.dragActive = false;
-      this.$store.commitTagged('move', {
+      this.drag.active = false;
+      this.$emit('move-token', {
         tokenId: this.id,
-        properties: {
-          position: this.localPosition,
-          zindex: this.$store.nextZIndex()
-        }
+        position: this.drag.position
       });
     }
   }
