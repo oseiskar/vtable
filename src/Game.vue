@@ -6,7 +6,7 @@
     <div class="players">
       <Player v-bind="player" v-for="player in players" :key="player.id"></Player>
     </div>
-    <div class="overlay" v-if="!name">
+    <div class="overlay" v-if="!identity.name">
       <div class="modal">
         <label>Your name: </label>
         <input v-model="nameInput"></input>
@@ -24,21 +24,24 @@ const Token = require('./Token.vue').default;
 module.exports = {
   components: { Token, Player },
   data: () => ({
-    nameInput: ''
+    nameInput: '',
   }),
-  props: [ 'id', 'name' ],
+  props: [ 'identity' ],
   computed: mapState({
     players: 'players',
-    tokens: 'tokens'
+    tokens: 'tokens',
+    name: 'name'
   }),
   methods: {
     join() {
-      console.log(this.$props);
       this.$store.commitTagged('addPlayer', {
         id: this.$props.id,
         name: this.nameInput
       });
     }
+  },
+  created() {
+    document.title = `${this.$store.state.name} | vtable`;
   }
 };
 </script>
