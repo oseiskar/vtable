@@ -29,7 +29,7 @@ function start() {
       if (type === 'addPlayer') {
         app.identity.name = payload.name;
       }
-      console.log({ type, payload });
+      // console.log({ type, payload });
     });
   }
 
