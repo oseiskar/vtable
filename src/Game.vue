@@ -67,7 +67,7 @@ module.exports = {
         return Math.round(255*(l + (1-l) * Math.random()));
       }
       const [r, g, b] = [0, 0, 0].map(() => randComponent());
-      return { r, g, b };
+      return `rgb(${r}, ${g}, ${b})`;
     },
     ...mapState({
       id: state => state.game && state.game.id,
@@ -80,10 +80,12 @@ module.exports = {
     join() {
       this.$emit('join-game', {
         id: this.identity.id,
-        name: this.nameInput,
+        text: this.nameInput,
         type: 'player',
         position: this.nextPlayerTokenPosition,
-        color: this.nextPlayerColor,
+        _style: {
+          'background-color': this.nextPlayerColor
+        },
         zindex: this.maxZIndex
       });
     },

@@ -7,7 +7,7 @@
       @dragStart="dragStart"
       :class="dynamicClass"
       :style="dynamicStyle">
-    {{ name || id }}
+    {{ text }}
   </Moveable>
 </template>
 
@@ -17,7 +17,7 @@ module.exports = {
   components: {
     Moveable
   },
-  props: [ 'id', 'position', 'zindex', 'name', 'type', 'color' ],
+  props: [ 'id', 'position', 'zindex', 'type', 'text', '_style' ],
   data: () => ({
     moveable: {
       draggable: true,
@@ -48,13 +48,9 @@ module.exports = {
       const style = {
         left: `${pos.x}px`,
         top: `${pos.y}px`,
-        'z-index': zindex
+        'z-index': zindex,
+        ...this._style
       };
-
-      if (this.color) {
-        const { r, g, b } = this.color;
-        style.background = `rgb(${r}, ${g}, ${b})`;
-      }
 
       return style;
     }

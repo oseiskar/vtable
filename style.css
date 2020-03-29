@@ -8,6 +8,10 @@
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
+.token-card.token-drag-active {
+  background-color: blue;
+}
+
 .token-player {
   padding: 1em;
   border-radius: 5em;
@@ -17,9 +21,13 @@
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
+.token-symbol {
+  text-shadow: 2px 2px rgba(0, 0, 0, 0.19);
+}
+
 .token-drag-active {
   cursor: grabbing !important;
-  background-color: white;
+  transform: rotate(-6deg) translate(0px, -5px);
 }
 
 .moveable {
