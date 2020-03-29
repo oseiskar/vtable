@@ -1,3 +1,4 @@
+const cryptoRandomString = require('crypto-random-string');
 const uuid = require('uuid');
 const Vue = require('vue');
 const Vuex = require('vuex');
@@ -7,42 +8,53 @@ const Game = require('./Game.vue').default;
 
 Vue.use(Vuex);
 
+function generateGameId() {
+  return cryptoRandomString({ length: 6, type: 'distinguishable' });
+}
+
 function start() {
   function startGame(initialState, gameId) {
     return new Promise((resolve, reject) => {
       const playerId = uuid.v4();
-      Store(playerId, initialState, gameId).then((store) => {
-        const app = new Vue({
-          el: '#app',
-          store,
-          data: () => ({
-            identity: {
-              id: playerId,
-              name: null
+      Store(playerId, initialState, gameId).then((store) => new Vue({
+        el: '#app',
+        store,
+        data: () => ({
+          identity: {
+            id: playerId,
+            name: null
+          }
+        }),
+        components: { Game },
+        template: '<Game v-bind:identity="identity" v-on:join-game="setName"></Game>',
+        methods: {
+          setName(player) {
+            const { name } = player;
+            this.identity.name = name;
+            console.log(`Joining as ${name}`);
+            const existing = Object.values(store.state.game.players).find((p) => p.name === name);
+            if (!existing) {
+              // allow Claiming any existing player handle
+              console.log('Creating a new player');
+              this.$store.commitTagged('addPlayer', {
+                name,
+                id: this.identity.id
+              });
             }
-          }),
-          components: { Game },
-          template: '<Game v-bind:identity="identity"></Game>',
-          created() {
-            store.doInit().then(() => {
-              console.log('Init success');
-              resolve(true);
-            });
           }
-        });
-
-        store.subscribeTagged((type, payload) => {
-          if (type === 'addPlayer') {
-            app.identity.name = payload.name;
-          }
-          // console.log({ type, payload });
-        });
-      }, reject);
+        },
+        created() {
+          store.doInit().then(() => {
+            console.log('Init success');
+            resolve(true);
+          });
+        }
+      }), reject);
     });
   }
 
   function joinGame(gameId) {
-    return startGame(null, gameId);
+    return startGame(null, gameId.toUpperCase());
   }
 
   const app = new Vue({
@@ -53,10 +65,9 @@ function start() {
     methods: {
       createGame(game) {
         this.started = true;
-        const generatedId = uuid.v4();
         startGame({
           ...game
-        }, generatedId);
+        }, generateGameId());
       },
       joinExistingGame(id) {
         joinGame(id).then(() => {
@@ -69,7 +80,7 @@ function start() {
   });
 
   const gameId = window.location.hash;
-  if (gameId) app.joinExistingGame(gameId);
+  if (gameId) app.joinExistingGame(gameId.replace('#', ''));
 }
 
 start();

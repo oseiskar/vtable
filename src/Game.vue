@@ -14,9 +14,14 @@
             <input v-model="nameInput" id="name" class="form-control form-control-lg"></input>
           </div>
           <div class="col-sm-3">
-            <button @click="join" class="btn btn-primary btn-lg col-sm-12">Join!</button>
+            <button @click="join" :disabled="!nameInput" class="btn btn-primary btn-lg col-sm-12">Join!</button>
           </div>
         </div>
+        <p class="help-text">
+          To invite others to join this game, share this direct link,
+          which should also be in your address bar:
+          <a :href="link">{{ link }}</a>
+        </p>
       </div>
     </div>
   </div>
@@ -33,22 +38,26 @@ module.exports = {
     nameInput: '',
   }),
   props: [ 'identity' ],
-  computed: mapState({
-    players: state => state.game.players,
-    tokens: state => state.game.tokens,
-    name: state => state.game && state.game.name
-  }),
+  computed: {
+    link() { return window.location.href; },
+    ...mapState({
+      id: state => state.game && state.game.id,
+      players: state => state.game.players,
+      tokens: state => state.game.tokens,
+      name: state => state.game && state.game.name
+    })
+  },
   methods: {
     join() {
-      this.$store.commitTagged('addPlayer', {
-        id: this.$props.identity.id,
-        name: this.nameInput
-      });
+      this.$emit('join-game', { name: this.nameInput });
     }
   },
   watch: {
     name() {
       document.title = `${this.$store.state.game.name} | vtable`;
+    },
+    id(value) {
+      if (value) window.location.hash = value;
     }
   }
 };

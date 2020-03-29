@@ -113,6 +113,15 @@ module.exports = (playerId, initialState, gameId) => {
         }
       });
     };
+
+    // Example
+    /* store.subscribeTagged((type, payload) => {
+      if (type === 'addPlayer') {
+        app.identity.name = payload.name;
+      }
+      // console.log({ type, payload });
+    }); */
+
     store.nextZIndex = () => maxZIndex + 1;
     return store;
   });
