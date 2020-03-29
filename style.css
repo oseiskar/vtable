@@ -1,4 +1,4 @@
-.card {
+.game-card {
   width: 200px;
   min-height: 6.5em;
   background-color: #29e;
@@ -10,8 +10,8 @@
 
 .moveable {
   touch-action: none;
-  user-select: none;
-  position: absolute;
+  user-select: none !important;
+  position: absolute !important;
 }
 
 .moveable-line {
@@ -34,18 +34,19 @@
   overflow: hidden;
 }
 
-.modal {
+.game-modal {
   margin: 10%;
   background: white;
   display: inline-block;
   padding: 5%;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-  font-size: 30px;
 }
 
 .game-selector {
-  margin-left: 10%;
-  margin-right: 10%;
-  margin-top: 5%;
-  margin-bottom: 5%;
+  margin-top: 8%;
+  max-width: 800px !important;
+}
+
+.new-game-header {
+  margin-top: 10%;
 }

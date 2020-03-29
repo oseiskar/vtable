@@ -1,6 +1,6 @@
 <template>
   <Moveable
-      class="moveable card"
+      class="moveable game-card"
       v-bind="moveable"
       @drag="drag"
       @dragEnd="dragEnd"
