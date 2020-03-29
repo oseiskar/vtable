@@ -7,7 +7,7 @@
         <input v-model="gameId" id="code" class="form-control form-control-lg" placeholder="Code"></input>
       </div>
       <div class="col-sm-3">
-        <button @click="joinGame" class="btn btn-outline-primary btn-lg col-sm-12">Join!</button>
+        <button @click="joinGame" class="btn btn-outline-primary btn-lg col-sm-12" :disabled="!gameId">Join!</button>
       </div>
     </div>
     <h5 class="new-game-header">... or start a new one</h5>

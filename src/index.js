@@ -8,45 +8,41 @@ const Game = require('./Game.vue').default;
 Vue.use(Vuex);
 
 function start() {
-  function startGame(initialState) {
-    const playerId = uuid.v4();
-    const store = Store(playerId, initialState);
-    const app = new Vue({
-      el: '#app',
-      store,
-      data: () => ({
-        identity: {
-          id: playerId,
-          name: null
-        }
-      }),
-      components: { Game },
-      template: '<Game v-bind:identity="identity"></Game>',
-      created() {
-        store.doInit().then(() => {
-          console.log('Init success');
+  function startGame(initialState, gameId) {
+    return new Promise((resolve, reject) => {
+      const playerId = uuid.v4();
+      Store(playerId, initialState, gameId).then((store) => {
+        const app = new Vue({
+          el: '#app',
+          store,
+          data: () => ({
+            identity: {
+              id: playerId,
+              name: null
+            }
+          }),
+          components: { Game },
+          template: '<Game v-bind:identity="identity"></Game>',
+          created() {
+            store.doInit().then(() => {
+              console.log('Init success');
+              resolve(true);
+            });
+          }
         });
-      }
-    });
 
-    store.subscribeTagged((type, payload) => {
-      if (type === 'addPlayer') {
-        app.identity.name = payload.name;
-      }
-      // console.log({ type, payload });
+        store.subscribeTagged((type, payload) => {
+          if (type === 'addPlayer') {
+            app.identity.name = payload.name;
+          }
+          // console.log({ type, payload });
+        });
+      }, reject);
     });
   }
 
   function joinGame(gameId) {
-    return new Promise((resolve, reject) => {
-      return reject('Unimplemented!');
-      //resolve(true);
-      // TODO
-      startGame({
-        players: [],
-        tokens: []
-      });
-    });
+    return startGame(null, gameId);
   }
 
   const app = new Vue({
@@ -59,10 +55,8 @@ function start() {
         this.started = true;
         const generatedId = uuid.v4();
         startGame({
-          id: generatedId,
-          players: [],
           ...game
-        });
+        }, generatedId);
       },
       joinExistingGame(id) {
         joinGame(id).then(() => {
