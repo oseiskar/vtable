@@ -26,10 +26,10 @@ function start() {
           }
         }),
         components: { Game },
-        template: '<Game v-bind:identity="identity" v-on:join-game="setName"></Game>',
+        template: '<Game v-bind:identity="identity" v-on:join-game="joinThisGame"></Game>',
         methods: {
-          setName(player) {
-            const { name } = player;
+          joinThisGame(playerToken) {
+            const { name } = playerToken;
             this.identity.name = name;
             console.log(`Joining as ${name}`);
             const existing = Object.values(store.state.game.players).find((p) => p.name === name);
@@ -40,6 +40,8 @@ function start() {
                 name,
                 id: this.identity.id
               });
+
+              this.$store.commitTagged('addToken', playerToken);
             }
           }
         },

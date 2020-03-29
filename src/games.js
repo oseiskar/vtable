@@ -12,7 +12,10 @@ function convertToRuntimeModel(game) {
   const tokens = {};
   let tokenId = 1;
   game.tokens.forEach((token) => {
-    const newToken = { ...token };
+    const newToken = {
+      ...token,
+      type: 'card'
+    };
     newToken.id = tokenId++;
     newToken.zindex = newToken.id;
     tokens[newToken.id] = newToken;

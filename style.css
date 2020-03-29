@@ -1,4 +1,4 @@
-.game-card {
+.token-card {
   width: 200px;
   min-height: 6.5em;
   background-color: #29e;
@@ -8,7 +8,22 @@
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
+.token-player {
+  padding: 1em;
+  border-radius: 5em;
+  min-width: 5em;
+  max-width: 10em;
+  text-align: center;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+.token-drag-active {
+  cursor: grabbing !important;
+  background-color: white;
+}
+
 .moveable {
+  cursor: grab;
   touch-action: none;
   user-select: none !important;
   position: absolute !important;

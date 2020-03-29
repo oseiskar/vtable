@@ -1,17 +1,13 @@
 <template>
   <Moveable
-      class="moveable game-card"
+      class="moveable"
       v-bind="moveable"
       @drag="dragMove"
       @dragEnd="dragEnd"
       @dragStart="dragStart"
-      :style="{
-          left: `${draggablePosition.x}px`,
-          top: `${draggablePosition.y}px`,
-          background: drag.active ? 'blue' : null,
-          'z-index': drag.active ? 1e10 : zindex
-      }">
-    sdfglk {{ id }}
+      :class="dynamicClass"
+      :style="dynamicStyle">
+    {{ name || id }}
   </Moveable>
 </template>
 
@@ -21,7 +17,7 @@ module.exports = {
   components: {
     Moveable
   },
-  props: [ 'id', 'position', 'zindex' ],
+  props: [ 'id', 'position', 'zindex', 'name', 'type', 'color' ],
   data: () => ({
     moveable: {
       draggable: true,
@@ -37,9 +33,30 @@ module.exports = {
     }
   }),
   computed: {
-    draggablePosition() {
-      if (this.drag.active || this.zindex === this.drag.zindex) return this.drag.position;
-      return this.position;
+    dynamicClass() {
+      return `token-${this.type}` + (this.drag.active ? ' token-drag-active' : '');
+    },
+    dynamicStyle() {
+      let pos = this.position;
+      if (this.drag.active || this.zindex === this.drag.zindex) pos = this.drag.position;
+
+      let zindex = this.zindex;
+      if (this.drag.active) {
+        zindex = 1e10;
+      }
+
+      const style = {
+        left: `${pos.x}px`,
+        top: `${pos.y}px`,
+        'z-index': zindex
+      };
+
+      if (this.color) {
+        const { r, g, b } = this.color;
+        style.background = `rgb(${r}, ${g}, ${b})`;
+      }
+
+      return style;
     }
   },
   methods: {
