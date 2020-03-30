@@ -1,7 +1,9 @@
 <template>
   <div class="app" >
-    <div class="board">
-      <Token v-bind="token" v-for="token in tokens" :key="token.id" v-on:move-token="moveToken"></Token>
+    <div class="board-container">
+      <div class="board" :style="boardStyle">
+        <Token v-bind="token" v-for="token in tokens" :key="token.id" v-on:move-token="moveToken"></Token>
+      </div>
     </div>
     <div class="overlay" v-if="!identity.name">
       <div class="game-modal">
@@ -35,6 +37,24 @@ module.exports = {
   }),
   props: [ 'identity' ],
   computed: {
+    boardDims() {
+      return (this.board && this.board.dimensions) || {
+        width: 800,
+        height: 800
+      };
+    },
+    boardStyle() {
+      const board = this.board;
+      const style = { ...((board && board._style) || {}) };
+      const dims = board && board.dimensions;
+      if (dims) {
+        style.left = `calc(50% - ${dims.width/2}px)`;
+        style.width = `${dims.width}px`;
+        style.height = `${dims.height}px`;
+      }
+      console.log({board, dims, style});
+      return style;
+    },
     link() { return window.location.href; },
     maxZIndex() {
       let maxIndex = 0;
@@ -44,8 +64,8 @@ module.exports = {
       return maxIndex;
     },
     nextPlayerTokenPosition() {
-      const center = { x: 600, y: 450 };
-      const R = 400;
+      const dims = this.boardDims;
+      const center = { x: dims.width / 2 - 50, y: dims.height / 2 - 30 };
       const nExisting = Object.values(this.players).length;
       let angle = 0;
       switch (nExisting) {
@@ -56,9 +76,11 @@ module.exports = {
         default: angle = Math.random() * 360;
       }
       const arad = (90 - angle) / 180 * Math.PI;
+      const Rx = dims.width / 2 + 100;
+      const Ry = dims.height / 2 + 50;
       return {
-        x: R * Math.cos(arad) + center.x,
-        y: R * Math.sin(arad) + center.y
+        x: Rx * Math.cos(arad) + center.x,
+        y: Ry * Math.sin(arad) + center.y
       };
     },
     nextPlayerColor() {
@@ -70,6 +92,7 @@ module.exports = {
       return `rgb(${r}, ${g}, ${b})`;
     },
     ...mapState({
+      board: state => state.game && state.game.board,
       id: state => state.game && state.game.id,
       players: state => state.game.players,
       tokens: state => state.game.tokens,

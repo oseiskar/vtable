@@ -15,7 +15,10 @@ function generateDeck({
       type: 'card'
     });
   }
-  return cards;
+  return {
+    name: '52 Cards',
+    tokens: cards
+  };
 }
 
 function generateChess({
@@ -32,8 +35,8 @@ function generateChess({
         'line-height': `${s}px`
       },
       position: {
-        x: x0 + col * s,
-        y: y0 + row * s
+        x: col * s,
+        y: row * s
       }
     });
   };
@@ -51,7 +54,24 @@ function generateChess({
     for (let col = 0; col < 8; ++col) addPiece(col, front, b ? '♟' : '♙');
   });
 
-  return pieces;
+  return {
+    name: 'Chess',
+    tokens: pieces,
+    board: {
+      _style: {
+        background: "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAAAAADhZOFXAAAAE0lEQVQI12M4/R8CGaD0aQayRAANwDlBHsu/3AAAAABJRU5ErkJggg==')",
+        'image-rendering': 'crisp-edges',
+        'background-repeat': 'no-repeat',
+        'background-size': 'cover'
+      },
+      dimensions: {
+        x0,
+        y0,
+        width: boardW,
+        height: boardW
+      }
+    }
+  };
 }
 
 function convertToRuntimeModel(game) {
@@ -72,12 +92,6 @@ function convertToRuntimeModel(game) {
 }
 
 module.exports = [
-  {
-    name: '52 Cards',
-    tokens: generateDeck()
-  },
-  {
-    name: 'Chess',
-    tokens: generateChess()
-  }
+  generateDeck(),
+  generateChess()
 ].map(convertToRuntimeModel);
