@@ -6,7 +6,7 @@
     @dragStart="dragStart"
     :class="dynamicClass"
     :style="dynamicStyle">
-    <div :data-token-id='token.id' :class='{ "has-context-menu": hasContextMenu }'>{{ text }}</div>
+    <div :data-token-id='token.id' :class='{ "has-context-menu": hasContextMenu }'><span v-if='!token.faceDown'>{{ text }}</span></div>
   </Moveable>
 </template>
 
@@ -16,7 +16,7 @@ module.exports = {
   components: {
     Moveable
   },
-  props: [ 'token', 'role' ],
+  props: [ 'token' ],
   data: () => ({
     moveable: {
       draggable: true,
@@ -36,7 +36,6 @@ module.exports = {
     position() { return this.token.position; },
     zindex() { return this.token.zindex; },
     type() { return this.token.type; },
-    style() { return this.token._style; },
     dimensions() { return this.token.dimensions; },
     text() { return this.token.text; },
     vueId() {
@@ -61,11 +60,13 @@ module.exports = {
         zindex = 1e10;
       }
 
+      const faceStyle = (this.token[(this.token.faceDown ? 'back' : 'front')] || {}).style || {};
       const style = {
         left: `${pos.x}px`,
         top: `${pos.y}px`,
         'z-index': zindex,
-        ...this.style
+        ...this.token.style,
+        ...faceStyle
       };
 
       if (this.dimensions) {

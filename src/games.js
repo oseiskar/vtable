@@ -17,9 +17,15 @@ function generateDeck({
         width: 64 * 2,
         height: 89 * 2
       },
-      _style: {
+      style: {
         color,
         padding: '20px'
+      },
+      back: {
+        style: {
+          background: '#ee8080',
+          border: '2px solid gray'
+        }
       },
       position: { x: x0 + i * dx, y: y0 + i * dy }
     });
@@ -49,7 +55,7 @@ function generateChess({ boardW } = defaults) {
     pieces.push({
       type: 'symbol',
       text,
-      _style: {
+      style: {
         'font-size': `${s}px`,
         'line-height': `${s}px`
       },

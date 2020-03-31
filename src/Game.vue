@@ -2,7 +2,7 @@
   <div class="app" @contextmenu.prevent="openContextMenu">
     <div class="board-container">
       <div class="board" :style="boardStyle">
-        <Token v-bind:token="token" v-for="token in tokens" :ref="`token-${token-id}`" :key="`token-${token.id}`" :role="`token-${token.id}`" v-on:move-token="moveToken" v-on:alter-token="alterToken"></Token>
+        <Token v-bind:token="token" v-for="token in tokens" :ref="`token-${token-id}`" :key="`token-${token.id}`" :role="`token-${token.id}`" v-on:move-token="moveToken"></Token>
       </div>
     </div>
     <div class="overlay" v-if="!identity.name">
@@ -27,7 +27,7 @@
       <div class="list-group">
         <a v-for="option in contextMenu.options"
           href="javascript:void(0)"
-          @click="option.action() && closeContextMenu()"
+          @click="option.action(), closeContextMenu()"
           class="list-group-item list-group-item-action">{{ option.name }}</a>
       </div>
     </div>
@@ -124,7 +124,7 @@ module.exports = {
         text: this.nameInput,
         type: 'player',
         position: this.nextPlayerTokenPosition,
-        _style: {
+        style: {
           'background-color': this.nextPlayerColor
         },
         zindex: this.maxZIndex
@@ -162,7 +162,7 @@ module.exports = {
         },
         options: [{
           name: 'Flip',
-          action: () => this.$emit('alter-token', {
+          action: () => this.alterToken({
             tokenId: targetToken.id,
             properties: { faceDown: !targetToken.faceDown }
           })
