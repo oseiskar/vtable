@@ -1,8 +1,8 @@
 <template>
-  <div class="app" >
+  <div class="app" @contextmenu.prevent="openContextMenu">
     <div class="board-container">
       <div class="board" :style="boardStyle">
-        <Token v-bind="token" v-for="token in tokens" :key="token.id" v-on:move-token="moveToken"></Token>
+        <Token v-bind:token="token" v-for="token in tokens" :ref="`token-${token-id}`" :key="`token-${token.id}`" :role="`token-${token.id}`" v-on:move-token="moveToken" v-on:alter-token="alterToken"></Token>
       </div>
     </div>
     <div class="overlay" v-if="!identity.name">
@@ -23,6 +23,14 @@
         </p>
       </div>
     </div>
+    <div class="context-menu" v-if="contextMenu" :style="contextMenu.style" v-click-outside="closeContextMenu">
+      <div class="list-group">
+        <a v-for="option in contextMenu.options"
+          href="javascript:void(0)"
+          @click="option.action() && closeContextMenu()"
+          class="list-group-item list-group-item-action">{{ option.name }}</a>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -30,10 +38,21 @@
 const { mapState } = require('vuex');
 const Token = require('./Token.vue').default;
 
+function getChildWithClass(el, className) {
+  // vue-moveable messes contextmenu events due to wrapping things inside
+  // its own divs. Need some hacking to work around this...
+  if (el.classList.contains(className)) {
+    return el;
+  } else {
+    return el.getElementsByClassName(className)[0];
+  }
+}
+
 module.exports = {
   components: { Token },
   data: () => ({
-    nameInput: ''
+    nameInput: '',
+    contextMenu: null
   }),
   props: [ 'identity' ],
   computed: {
@@ -52,7 +71,6 @@ module.exports = {
         style.width = `${dims.width}px`;
         style.height = `${dims.height}px`;
       }
-      console.log({board, dims, style});
       return style;
     },
     link() { return window.location.href; },
@@ -112,14 +130,47 @@ module.exports = {
         zindex: this.maxZIndex
       });
     },
-    moveToken({ tokenId, position }) {
+    alterToken({ tokenId, properties }) {
       this.$store.commitTagged('move', {
         tokenId,
-        properties: {
-          position,
-          zindex: this.maxZIndex + 1
-        }
+        properties
       });
+    },
+    moveToken({ tokenId, position }) {
+      this.alterToken({ tokenId, properties: {
+        position,
+        zindex: this.maxZIndex + 1
+      }});
+    },
+    openContextMenu(event) {
+      const menuElement = getChildWithClass(event.target, 'has-context-menu');
+      if (menuElement) {
+        const menuTarget = this.tokens[menuElement.dataset.tokenId];
+        this.contextMenu = this.buildContextMenu(event, menuTarget);
+        event.preventDefault();
+        return true;
+      }
+      return false;
+    },
+    buildContextMenu(event, targetToken) {
+      if (!targetToken) return null;
+      return {
+        style: {
+          left: `${event.clientX}px`,
+          top: `${event.clientY}px`,
+          'z-index': this.maxZIndex + 100
+        },
+        options: [{
+          name: 'Flip',
+          action: () => this.$emit('alter-token', {
+            tokenId: targetToken.id,
+            properties: { faceDown: !targetToken.faceDown }
+          })
+        }]
+      };
+    },
+    closeContextMenu() {
+      this.contextMenu = null;
     }
   },
   watch: {

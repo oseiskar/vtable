@@ -1,13 +1,12 @@
 <template>
   <Moveable
-      class="moveable"
-      v-bind="moveable"
-      @drag="dragMove"
-      @dragEnd="dragEnd"
-      @dragStart="dragStart"
-      :class="dynamicClass"
-      :style="dynamicStyle">
-    {{ text }}
+    v-bind="moveable"
+    @drag="dragMove"
+    @dragEnd="dragEnd"
+    @dragStart="dragStart"
+    :class="dynamicClass"
+    :style="dynamicStyle">
+    <div :data-token-id='token.id' :class='{ "has-context-menu": hasContextMenu }'>{{ text }}</div>
   </Moveable>
 </template>
 
@@ -17,7 +16,7 @@ module.exports = {
   components: {
     Moveable
   },
-  props: [ 'id', 'position', 'zindex', 'type', 'text', '_style', 'dimensions' ],
+  props: [ 'token', 'role' ],
   data: () => ({
     moveable: {
       draggable: true,
@@ -33,8 +32,25 @@ module.exports = {
     }
   }),
   computed: {
+    id() { return this.token.id; },
+    position() { return this.token.position; },
+    zindex() { return this.token.zindex; },
+    type() { return this.token.type; },
+    style() { return this.token._style; },
+    dimensions() { return this.token.dimensions; },
+    text() { return this.token.text; },
+    vueId() {
+      return `token-content-${this.id}`;
+    },
+    hasContextMenu() {
+      return this.type === 'card';
+    },
     dynamicClass() {
-      return `token-${this.type}` + (this.drag.active ? ' token-drag-active' : '');
+      return {
+        [`token-${this.type}`]: true,
+        'moveable': true,
+        'token-drag-active': this.drag.active
+      };
     },
     dynamicStyle() {
       let pos = this.position;
@@ -49,7 +65,7 @@ module.exports = {
         left: `${pos.x}px`,
         top: `${pos.y}px`,
         'z-index': zindex,
-        ...this._style
+        ...this.style
       };
 
       if (this.dimensions) {

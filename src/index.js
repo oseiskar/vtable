@@ -2,11 +2,13 @@ const cryptoRandomString = require('crypto-random-string');
 const uuid = require('uuid');
 const Vue = require('vue');
 const Vuex = require('vuex');
+const vClickOutside = require('v-click-outside');
 const Store = require('./store');
 const GameSelector = require('./GameSelector.vue').default;
 const Game = require('./Game.vue').default;
 
 Vue.use(Vuex);
+Vue.use(vClickOutside);
 
 function generateGameId() {
   return cryptoRandomString({ length: 6, type: 'distinguishable' });
