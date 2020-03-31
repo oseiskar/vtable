@@ -1,29 +1,48 @@
 const defaults = {
-  x0: 100,
-  y0: 100,
   boardW: 600,
   boardH: 600
 };
 
 function generateDeck({
-  x0, y0, size = 52, dx = 2, dy = 3
+  x0 = 100, y0 = 100, dx = 2, dy = 3
 } = defaults) {
   const cards = [];
-  for (let i = 0; i < size; ++i) {
+  function pushCard(text, color) {
+    const i = cards.length;
     cards.push({
-      position: { x: x0 + i * dx, y: y0 + i * dy },
-      type: 'card'
+      text,
+      type: 'card',
+      faceDown: true,
+      dimensions: {
+        width: 64 * 2,
+        height: 89 * 2
+      },
+      _style: {
+        color,
+        padding: '20px'
+      },
+      position: { x: x0 + i * dx, y: y0 + i * dy }
     });
   }
+
+  [
+    ['♥', 'red'],
+    ['♠', 'black'],
+    ['♦', 'red'],
+    ['♣', 'black']
+  ].forEach(([suit, color]) => {
+    ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'Kn', 'Q', 'K', 'A'].forEach((rank) => {
+      pushCard(`${suit} ${rank}`, color);
+    });
+  });
+
   return {
-    name: '52 Cards',
+    name: '52-card deck',
     tokens: cards
   };
 }
 
-function generateChess({
-  x0, y0, boardW
-} = defaults) {
+function generateChess({ boardW } = defaults) {
   const pieces = [];
   const addPiece = (col, row, text) => {
     const s = boardW / 8;
@@ -65,8 +84,6 @@ function generateChess({
         'background-size': 'cover'
       },
       dimensions: {
-        x0,
-        y0,
         width: boardW,
         height: boardW
       }

@@ -17,7 +17,7 @@ module.exports = {
   components: {
     Moveable
   },
-  props: [ 'id', 'position', 'zindex', 'type', 'text', '_style' ],
+  props: [ 'id', 'position', 'zindex', 'type', 'text', '_style', 'dimensions' ],
   data: () => ({
     moveable: {
       draggable: true,
@@ -51,6 +51,12 @@ module.exports = {
         'z-index': zindex,
         ...this._style
       };
+
+      if (this.dimensions) {
+        const { width, height } = this.dimensions;
+        style.width = `${width}px`;
+        style.height = `${height}px`;
+      }
 
       return style;
     }
