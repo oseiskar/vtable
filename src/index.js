@@ -38,12 +38,27 @@ function start() {
             if (!existing) {
               // allow Claiming any existing player handle
               console.log('Creating a new player');
-              this.$store.commitTagged('addPlayer', {
-                name,
-                id: this.identity.id
-              });
-
-              this.$store.commitTagged('addToken', playerToken);
+              const { stack, ...player } = playerToken;
+              this.$store.commitTagged('addItems', [
+                {
+                  type: 'players',
+                  id: this.identity.id,
+                  properties: { name }
+                },
+                {
+                  type: 'tokens',
+                  id: player.id,
+                  properties: {
+                    stackId: stack.id,
+                    ...player
+                  }
+                },
+                {
+                  type: 'stacks',
+                  id: stack.id,
+                  properties: stack
+                }
+              ]);
             }
           }
         },

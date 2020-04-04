@@ -3,12 +3,9 @@ const defaults = {
   boardH: 600
 };
 
-function generateDeck({
-  x0 = 100, y0 = 100, dx = 2, dy = 3
-} = defaults) {
+function generateDeck({ x0 = 100, y0 = 100 } = defaults) {
   const cards = [];
   function pushCard(text, color) {
-    const i = cards.length;
     cards.push({
       text,
       type: 'card',
@@ -27,7 +24,7 @@ function generateDeck({
           border: '2px solid gray'
         }
       },
-      position: { x: x0 + i * dx, y: y0 + i * dy }
+      stackId: 1
     });
   }
 
@@ -44,7 +41,16 @@ function generateDeck({
 
   return {
     name: '52-card deck',
-    tokens: cards
+    tokens: cards,
+    stacks: {
+      1: {
+        id: 1,
+        position: {
+          x: x0,
+          y: y0
+        }
+      }
+    }
   };
 }
 
@@ -116,16 +122,38 @@ function convertToRuntimeModel(game) {
       ...token
     };
     newToken.id = tokenId++;
-    newToken.zindex = newToken.id;
+    newToken.stackPosition = newToken.id;
     tokens[newToken.id] = newToken;
+    const stack = game.stacks[newToken.stackId];
+    stack.zindex = newToken.id;
   });
+
   const newGame = { ...game };
   newGame.tokens = tokens;
   newGame.players = {};
   return newGame;
 }
 
+function stackEachSeparately(game) {
+  const newGame = { ...game };
+  let stackId = 1;
+  const stacks = {};
+  newGame.tokens.forEach((token0) => {
+    const token = token0;
+    token.stackId = stackId++;
+    token.stackPosition = 1;
+    const { position } = token;
+    delete token.position;
+    stacks[token.stackId] = {
+      position,
+      id: token.stackId
+    };
+  });
+  newGame.stacks = stacks;
+  return newGame;
+}
+
 module.exports = [
   generateDeck(),
-  generateChess()
+  stackEachSeparately(generateChess())
 ].map(convertToRuntimeModel);

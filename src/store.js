@@ -25,18 +25,19 @@ function firebaseStore(initialState, gameId) {
         game: {}
       },
       mutations: {
-        addPlayer(state, player) {
-          gameRef.update({ [`players.${player.id}`]: player });
-        },
-        addToken(state, token) {
-          gameRef.update({ [`tokens.${token.id}`]: token });
-        },
-        move(state, {
-          tokenId, properties
-        }) {
+        addItems(state, items) {
           const update = {};
-          Object.entries(properties).forEach(([key, value]) => {
-            update[`tokens.${tokenId}.${key}`] = value;
+          items.forEach(({ type, id, properties }) => {
+            update[`${type}.${id}`] = { id, ...properties };
+          });
+          gameRef.update(update);
+        },
+        alterItems(state, items) {
+          const update = {};
+          items.forEach(({ type, id, properties }) => {
+            Object.entries(properties).forEach(([key, value]) => {
+              update[`${type}.${id}.${key}`] = value;
+            });
           });
           gameRef.update(update);
         },
@@ -68,22 +69,21 @@ function localStore(initialState) {
       game: initialState
     },
     mutations: {
-      addPlayer(state, player) {
-        Vue.set(state.game.players, player.id, player);
+      addItems(state, items) {
+        items.forEach(({ type, id, properties }) => {
+          Vue.set(state.game[type], id, { id, ...properties });
+        });
       },
-      addToken(state, token) {
-        Vue.set(state.game.tokens, token.id, token);
-      },
-      move(state, {
-        tokenId, properties
-      }) {
-        const token = state.game.tokens[tokenId];
-        if (!token) {
-          console.error(`unable to find token with ID ${tokenId}`);
-          return;
-        }
-        Object.entries(properties).forEach(([key, value]) => {
-          Vue.set(token, key, value);
+      alterItems(state, items) {
+        items.forEach(({ type, id, properties }) => {
+          const item = state.game[type][id];
+          if (!item) {
+            console.error(`unable to find ${type} with ID ${id}`);
+            return;
+          }
+          Object.entries(properties).forEach(([key, value]) => {
+            Vue.set(item, key, value);
+          });
         });
       }
     }
@@ -98,9 +98,10 @@ module.exports = (playerId, initialState, gameId) => {
   return storePromise.then((s) => {
     const store = s;
     store.commitTagged = (mutationType, mutationPayload) => {
-      const payload = { ...mutationPayload, source: playerId };
+      // TODO: not currently useful
+      // const payload = { ...mutationPayload, source: playerId };
       // console.log(payload);
-      store.commit(mutationType, payload);
+      store.commit(mutationType, mutationPayload);
     };
 
     /*  store.subscribeTagged = (func) => {

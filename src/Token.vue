@@ -6,7 +6,10 @@
     @dragStart="dragStart"
     :class="dynamicClass"
     :style="dynamicStyle">
-    <div :data-token-id='token.id' :class='{ "has-context-menu": hasContextMenu }'><span v-if='!token.faceDown'>{{ text }}</span></div>
+    <div v-for="token, index in tokens"
+      :class="tokenClass(token)"
+      :style="tokenStyle(token, index)"
+      :data-token-id='token.id'><span v-if='!token.faceDown'>{{ token.text }}</span></div>
   </Moveable>
 </template>
 
@@ -16,7 +19,7 @@ module.exports = {
   components: {
     Moveable
   },
-  props: [ 'token' ],
+  props: [ 'stack', 'tokens' ],
   data: () => ({
     moveable: {
       draggable: true,
@@ -32,21 +35,10 @@ module.exports = {
     }
   }),
   computed: {
-    id() { return this.token.id; },
-    position() { return this.token.position; },
-    zindex() { return this.token.zindex; },
-    type() { return this.token.type; },
-    dimensions() { return this.token.dimensions; },
-    text() { return this.token.text; },
-    vueId() {
-      return `token-content-${this.id}`;
-    },
-    hasContextMenu() {
-      return this.type === 'card';
-    },
+    position() { return this.stack.position; },
+    zindex() { return this.stack.zindex; },
     dynamicClass() {
       return {
-        [`token-${this.type}`]: true,
         'moveable': true,
         'token-drag-active': this.drag.active
       };
@@ -60,25 +52,40 @@ module.exports = {
         zindex = 1e10;
       }
 
-      const faceStyle = (this.token[(this.token.faceDown ? 'back' : 'front')] || {}).style || {};
-      const style = {
+      return {
         left: `${pos.x}px`,
         top: `${pos.y}px`,
-        'z-index': zindex,
-        ...this.token.style,
+        'z-index': zindex
+      };
+    }
+  },
+  methods: {
+    tokenClass(token) {
+      return {
+        [`token-${token.type}`]: true,
+        'has-context-menu': token.type === 'card'
+      };
+    },
+    tokenStyle(token, index) {
+      const faceStyle = (token[(token.faceDown ? 'back' : 'front')] || {}).style || {};
+      const dx = 2;
+      const dy = 3;
+      const style = {
+        position: 'absolute',
+        left: `${index * dx}px`,
+        top: `${index * dy}px`,
+        ...token.style,
         ...faceStyle
       };
 
-      if (this.dimensions) {
-        const { width, height } = this.dimensions;
+      if (token.dimensions) {
+        const { width, height } = token.dimensions;
         style.width = `${width}px`;
         style.height = `${height}px`;
       }
 
       return style;
-    }
-  },
-  methods: {
+    },
     dragStart({ target }) {
       this.drag.active = true;
       this.drag.zindex = this.zindex;
@@ -94,7 +101,8 @@ module.exports = {
     dragEnd({ target }) {
       this.drag.active = false;
       this.$emit('move-token', {
-        tokenId: this.id,
+        //tokenId: this.id,
+        stackId: this.stack.id,
         position: this.drag.position
       });
     }

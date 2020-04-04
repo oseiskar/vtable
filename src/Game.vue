@@ -2,7 +2,7 @@
   <div class="app" @contextmenu.prevent="openContextMenu">
     <div class="board-container">
       <div class="board" :style="boardStyle">
-        <Token v-bind:token="token" v-for="token in tokens" :ref="`token-${token-id}`" :key="`token-${token.id}`" :role="`token-${token.id}`" v-on:move-token="moveToken"></Token>
+        <Token v-bind="obj" v-for="obj in stackedTokens" :key="`stack-${obj.stack.id}`" v-on:move-token="moveToken"></Token>
       </div>
     </div>
     <div class="overlay" v-if="!identity.name">
@@ -76,10 +76,17 @@ module.exports = {
     link() { return window.location.href; },
     maxZIndex() {
       let maxIndex = 0;
-      Object.values(this.tokens).forEach(token => {
-        maxIndex = Math.max(maxIndex, token.zindex);
+      Object.values(this.stacks).forEach((stack) => {
+        maxIndex = Math.max(maxIndex, stack.zindex);
       });
       return maxIndex;
+    },
+    maxStackPosition() {
+      let max = 0;
+      Object.values(this.tokens).forEach((token) => {
+        max = Math.max(max, stack.stackPosition);
+      });
+      return max;
     },
     nextPlayerTokenPosition() {
       const dims = this.boardDims;
@@ -113,6 +120,28 @@ module.exports = {
       board: state => state.game && state.game.board,
       id: state => state.game && state.game.id,
       players: state => state.game.players,
+      stacks: state => state.game.stacks,
+      stackedTokens(state) {
+        const stacked = {};
+        if (state.game && state.game.tokens) {
+          Object.values(state.game.tokens).forEach((token) => {
+            if (!stacked[token.stackId]) {
+              stacked[token.stackId] = {
+                stack: state.game.stacks[token.stackId],
+                tokens: [token]
+              }
+            } else {
+              stacked[token.stackId].tokens.push(token);
+            }
+          });
+          Object.values(stacked).forEach((stack) => {
+            stack.tokens.sort((a, b) => {
+              return a.stackPosition - b.stackPosition
+            });
+          });
+        }
+        return Object.values(stacked);
+      },
       tokens: state => state.game.tokens,
       name: state => state.game && state.game.name
     })
@@ -123,24 +152,38 @@ module.exports = {
         id: this.identity.id,
         text: this.nameInput,
         type: 'player',
-        position: this.nextPlayerTokenPosition,
         style: {
           'background-color': this.nextPlayerColor
         },
-        zindex: this.maxZIndex
+        stack: {
+          id: `stack-${this.identity.id}`,
+          position: this.nextPlayerTokenPosition,
+          zindex: this.maxZIndex
+        }
       });
     },
-    alterToken({ tokenId, properties }) {
-      this.$store.commitTagged('move', {
-        tokenId,
-        properties
-      });
-    },
-    moveToken({ tokenId, position }) {
-      this.alterToken({ tokenId, properties: {
-        position,
-        zindex: this.maxZIndex + 1
-      }});
+    moveToken({ tokenId, stackId, position }) {
+      const change = [{
+        type: 'stacks',
+        id: stackId,
+        properties: {
+          id: stackId, // needed if a new stack is added
+          position,
+          zindex: this.maxZIndex + 1
+        }
+      }];
+
+      if (tokenId && this.tokens[tokenId].stackId !== stackId) {
+        change.push({
+          type: 'tokens',
+          id: tokenId,
+          properties: {
+            stackId,
+            stackPosition: this.maxStackPosition + 1
+          }
+        });
+      }
+      this.$store.commitTagged('alterItems', change);
     },
     openContextMenu(event) {
       const menuElement = getChildWithClass(event.target, 'has-context-menu');
