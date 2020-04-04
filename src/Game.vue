@@ -86,7 +86,7 @@ module.exports = {
       Object.values(this.tokens).forEach((token) => {
         max = Math.max(max, stack.stackPosition);
       });
-      return max;
+      return Math.ceil(max); // shuffle uses random floats
     },
     nextPlayerTokenPosition() {
       const dims = this.boardDims;
@@ -140,7 +140,7 @@ module.exports = {
             });
           });
         }
-        return Object.values(stacked);
+        return stacked;
       },
       tokens: state => state.game.tokens,
       name: state => state.game && state.game.name
@@ -188,29 +188,51 @@ module.exports = {
     openContextMenu(event) {
       const menuElement = getChildWithClass(event.target, 'has-context-menu');
       if (menuElement) {
-        const menuTarget = this.tokens[menuElement.dataset.tokenId];
-        this.contextMenu = this.buildContextMenu(event, menuTarget);
-        event.preventDefault();
-        return true;
+        const { tokenId, stackId } = menuElement.dataset;
+        const token = tokenId && this.tokens[tokenId];
+        const stack = stackId && this.stackedTokens[stackId];
+        if (token || stack) {
+          this.contextMenu = this.buildContextMenu(event, { token, stack });
+          event.preventDefault();
+          return true;
+        }
       }
       return false;
     },
-    buildContextMenu(event, targetToken) {
-      if (!targetToken) return null;
-      return {
+    buildContextMenu(event, { token, stack }) {
+      const menu = {
         style: {
           left: `${event.clientX}px`,
           top: `${event.clientY}px`,
           'z-index': this.maxZIndex + 100
         },
-        options: [{
-          name: 'Flip',
-          action: () => this.alterToken({
-            tokenId: targetToken.id,
-            properties: { faceDown: !targetToken.faceDown }
-          })
-        }]
+        options: []
       };
+      if (token) {
+        menu.options.push({
+          name: 'Flip',
+          action: () => this.$store.commitTagged('alterItems', [{
+            type: 'tokens',
+            id: token.id,
+            properties: {
+              faceDown: !token.faceDown
+            }
+          }])
+        });
+      }
+      if (stack) {
+        menu.options.push({
+          name: 'Shuffle',
+          action: () => this.$store.commitTagged('alterItems', stack.tokens.map((token) => ({
+            type: 'tokens',
+            id: token.id,
+            properties: {
+              stackPosition: Math.random()
+            }
+          })))
+        });
+      }
+      return menu;
     },
     closeContextMenu() {
       this.contextMenu = null;

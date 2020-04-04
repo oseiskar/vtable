@@ -9,7 +9,8 @@
     <div v-for="token, index in tokens"
       :class="tokenClass(token)"
       :style="tokenStyle(token, index)"
-      :data-token-id='token.id'><span v-if='!token.faceDown'>{{ token.text }}</span></div>
+      :data-token-id='tokenIdAttr(token, index)'
+      :data-stack-id='stackIdAttr(token, index)'><span v-if='!token.faceDown'>{{ token.text }}</span></div>
   </Moveable>
 </template>
 
@@ -85,6 +86,14 @@ module.exports = {
       }
 
       return style;
+    },
+    tokenIdAttr(token, index) {
+      if (index === this.tokens.length - 1) return token.id;
+      return null;
+    },
+    stackIdAttr(token, index) {
+      if (this.tokens.length > 1) return this.stack.id;
+      return null;
     },
     dragStart({ target }) {
       this.drag.active = true;
