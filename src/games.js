@@ -48,6 +48,18 @@ function generateDeck({
   };
 }
 
+function generateChessboardBackground({ white = 'white', black = '#bbbbbb' } = {}) {
+  let tiles = '';
+  for (let y = 0; y < 8; ++y) {
+    for (let x = 0; x < 8; ++x) {
+      const color = ((x + y) % 2) ? black : white;
+      tiles += `<rect x="${x}" y="${y}" width="1" height="1" fill="${color}"/>`;
+    }
+  }
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8">${tiles}</svg>`;
+  return `data:image/svg+xml;base64,${btoa(svg)}`;
+}
+
 function generateChess({ boardW } = defaults) {
   const pieces = [];
   const addPiece = (col, row, text) => {
@@ -84,8 +96,7 @@ function generateChess({ boardW } = defaults) {
     tokens: pieces,
     board: {
       _style: {
-        background: "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAAAAADhZOFXAAAAE0lEQVQI12M4/R8CGaD0aQayRAANwDlBHsu/3AAAAABJRU5ErkJggg==')",
-        'image-rendering': 'crisp-edges',
+        'background-image': `url('${generateChessboardBackground()}')`,
         'background-repeat': 'no-repeat',
         'background-size': 'cover'
       },
