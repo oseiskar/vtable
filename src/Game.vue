@@ -2,7 +2,10 @@
   <div class="app" @contextmenu.prevent="openContextMenu">
     <div class="board-container">
       <div class="board" :style="boardStyle">
-        <Token v-bind="obj" v-for="obj in stackedTokens" :key="`stack-${obj.stack.id}`" v-on:move-token="moveToken"></Token>
+        <Token v-bind="obj" v-for="obj in stackedTokens"
+        :key="`stack-${obj.stack.id}`"
+        v-on:move-token="moveToken"
+        v-on:drag-token="dragToken"></Token>
       </div>
     </div>
     <div class="overlay" v-if="!identity.name">
@@ -126,10 +129,18 @@ module.exports = {
         if (state.game && state.game.tokens) {
           Object.values(state.game.tokens).forEach((token) => {
             if (!stacked[token.stackId]) {
-              stacked[token.stackId] = {
-                stack: state.game.stacks[token.stackId],
-                tokens: [token]
+              const stack = { ...state.game.stacks[token.stackId] };
+              let remoteDrag = stack.remoteDrag;
+              delete stack.remoteDrag;
+              if (remoteDrag && remoteDrag.source === this.identity.id) {
+                // ignore own drag events
+                remoteDrag = null;
               }
+              stacked[token.stackId] = {
+                remoteDrag,
+                stack,
+                tokens: [token]
+              };
             } else {
               stacked[token.stackId].tokens.push(token);
             }
@@ -169,7 +180,8 @@ module.exports = {
         properties: {
           id: stackId, // needed if a new stack is added
           position,
-          zindex: this.maxZIndex + 1
+          zindex: this.maxZIndex + 1,
+          remoteDrag: null
         }
       }];
 
@@ -182,8 +194,27 @@ module.exports = {
             stackPosition: this.maxStackPosition + 1
           }
         });
+        change.push({
+          type: 'stacks',
+          id: this.tokens[tokenId].stackId,
+          properties: {
+            remoteDrag: null
+          }
+        })
       }
       this.$store.commitTagged('alterItems', change);
+    },
+    dragToken({ stackId, drag }) {
+      this.$store.commitTagged('alterItems', [{
+        type: 'stacks',
+        id: stackId,
+        properties: {
+          remoteDrag: {
+            source: this.identity.id,
+            ...drag
+          }
+        }
+      }]);
     },
     openContextMenu(event) {
       const menuElement = getChildWithClass(event.target, 'has-context-menu');
