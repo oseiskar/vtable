@@ -84,7 +84,7 @@ module.exports = {
     maxStackPosition() {
       let max = 0;
       Object.values(this.tokens).forEach((token) => {
-        max = Math.max(max, stack.stackPosition);
+        max = Math.max(max, token.stackPosition);
       });
       return Math.ceil(max); // shuffle uses random floats
     },
