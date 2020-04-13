@@ -35,9 +35,15 @@ function firebaseStore(initialState, gameId) {
         alterItems(state, items) {
           const update = {};
           items.forEach(({ type, id, properties }) => {
-            Object.entries(properties).forEach(([key, value]) => {
-              update[`${type}.${id}.${key}`] = value;
-            });
+            if (properties === null) {
+              update[`${type}.${id}`] = firebase.firestore.FieldValue.delete();
+            } else {
+              Object.entries(properties).forEach(([key, value]) => {
+                update[`${type}.${id}.${key}`] = value === null
+                  ? firebase.firestore.FieldValue.delete()
+                  : value;
+              });
+            }
           });
           gameRef.update(update);
         },
@@ -76,13 +82,22 @@ function localStore(initialState) {
       },
       alterItems(state, items) {
         items.forEach(({ type, id, properties }) => {
-          const item = state.game[type][id];
+          const coll = state.game[type];
+          if (properties === null) {
+            delete coll[id];
+            return;
+          }
+          const item = coll[id];
           if (!item) {
             console.error(`unable to find ${type} with ID ${id}`);
             return;
           }
           Object.entries(properties).forEach(([key, value]) => {
-            Vue.set(item, key, value);
+            if (value === null) {
+              Vue.delete(item, key);
+            } else {
+              Vue.set(item, key, value);
+            }
           });
         });
       }

@@ -19,8 +19,6 @@ const Moveable = require('vue-moveable');
 const uuid = require('uuid');
 
 const QUICK_DRAG_MILLISECONDS = 400;
-const dx = 2;
-const dy = 3;
 const DRAG_BROADCAST_INTERVAL_MILLIS = 300;
 const ANIM_INTERVAL = 20;
 
@@ -55,7 +53,7 @@ module.exports = {
   components: {
     Moveable
   },
-  props: [ 'stack', 'tokens', 'remoteDrag' ],
+  props: [ 'stack', 'tokens', 'remoteDrag', 'dx', 'dy' ],
   data: () => ({
     moveable: {
       draggable: true,
@@ -84,17 +82,18 @@ module.exports = {
         pos0 = this.position;
       }
       if (v) {
-        this.drag = { ...v };
-        this.drag.position = pos0;
-        this.drag.active = true;
+        const newDrag = { ...v };
+        newDrag.position = pos0;
+        newDrag.active = true;
+        this.drag = newDrag;
         animate(this);
       } else {
         this.drag.active = false;
-        // TODO: hacks
-        this.drag.zindex = 0;
-        this.drag.stackSize = 0;
-        this.drag.stack = false;
       }
+    },
+    tokens() {
+      if (this.drag.active === 'pending')
+        this.drag.active = false;
     }
   },
   computed: {
@@ -112,8 +111,7 @@ module.exports = {
     dynamicStyle() {
       let pos = this.position;
       const drag = this.animDrag;
-      if (drag.stack && (drag.active || this.zindex === drag.zindex))
-        pos = drag.position;
+      if (drag.stack && drag.active) pos = drag.position;
 
       let zindex = this.zindex;
       if (drag.active) {
@@ -139,10 +137,10 @@ module.exports = {
       const faceStyle = (token[(token.faceDown ? 'back' : 'front')] || {}).style || {};
       const drag = this.animDrag;
 
-      let x = index * dx;
-      let y = index * dy;
+      let x = index * this.dx;
+      let y = index * this.dy;
 
-      if (index === this.tokens.length - 1 && !drag.stack && (drag.active || this.tokens.length === drag.stackSize)) {
+      if (index === this.tokens.length - 1 && !drag.stack && drag.active) {
         x = drag.position.x - this.position.x + drag.offset.x;
         y = drag.position.y - this.position.y + drag.offset.y;
       }
@@ -173,7 +171,7 @@ module.exports = {
     },
     dragStart(obj) {
       setTimeout(() => {
-        if (!this.drag.moved) {
+        if (!this.drag.moved && this.drag.active === true) {
           this.drag.stack = true;
         }
       }, QUICK_DRAG_MILLISECONDS);
@@ -184,8 +182,8 @@ module.exports = {
         stackSize: this.tokens.length,
         position: { ...this.position },
         offset: {
-          x: dx * (this.tokens.length - 1),
-          y: dy * (this.tokens.length - 1)
+          x: this.dx * (this.tokens.length - 1),
+          y: this.dy * (this.tokens.length - 1)
         },
         lastBroadcast: 0
       }
@@ -217,7 +215,7 @@ module.exports = {
       }
     },
     dragEnd({ target }) {
-      this.drag.active = false;
+      this.drag.active = 'pending'; // TODO: hacky
       let move;
       if (this.drag.stack) {
         move = {

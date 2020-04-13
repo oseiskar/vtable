@@ -51,6 +51,9 @@ function getChildWithClass(el, className) {
   }
 }
 
+const STACK_DX = 2;
+const STACK_DY = 3;
+
 module.exports = {
   components: { Token },
   data: () => ({
@@ -80,14 +83,14 @@ module.exports = {
     maxZIndex() {
       let maxIndex = 0;
       Object.values(this.stacks).forEach((stack) => {
-        maxIndex = Math.max(maxIndex, stack.zindex);
+        maxIndex = Math.max(maxIndex, stack.zindex || 0); // TODO
       });
       return maxIndex;
     },
     maxStackPosition() {
       let max = 0;
       Object.values(this.tokens).forEach((token) => {
-        max = Math.max(max, token.stackPosition);
+        max = Math.max(max, token.stackPosition || 0); // TODO
       });
       return Math.ceil(max); // shuffle uses random floats
     },
@@ -134,12 +137,14 @@ module.exports = {
               delete stack.remoteDrag;
               if (remoteDrag && remoteDrag.source === this.identity.id) {
                 // ignore own drag events
-                remoteDrag = null;
+                remoteDrag = undefined;
               }
               stacked[token.stackId] = {
                 remoteDrag,
                 stack,
-                tokens: [token]
+                tokens: [token],
+                dx: STACK_DX,
+                dy: STACK_DY
               };
             } else {
               stacked[token.stackId].tokens.push(token);
@@ -173,36 +178,122 @@ module.exports = {
         }
       });
     },
-    moveToken({ tokenId, stackId, position }) {
-      const change = [{
-        type: 'stacks',
-        id: stackId,
-        properties: {
-          id: stackId, // needed if a new stack is added
-          position,
-          zindex: this.maxZIndex + 1,
-          remoteDrag: null
-        }
-      }];
-
-      if (tokenId && this.tokens[tokenId].stackId !== stackId) {
-        change.push({
-          type: 'tokens',
-          id: tokenId,
-          properties: {
-            stackId,
-            stackPosition: this.maxStackPosition + 1
+    findTargetStack(position) {
+      function dist2(p0, stackBase, nStack, d) {
+        const p1 = {
+          x: stackBase.x + d.x * (nStack - 1),
+          y: stackBase.y + d.y * (nStack - 1)
+        };
+        return (p1.x - p0.x)**2 + (p1.y - p0.y)**2;
+      }
+      const STACK_MERGE_DISTANCE = 20; // pixels
+      let maxZ, bestStack = null;
+      Object.values(this.stackedTokens).forEach(obj => {
+        const { stack, dx, dy, tokens } = obj;
+        if (!this.isStackable(obj)) return;
+        const d2 = dist2(position, stack.position, tokens.length, { x: dx, y: dy });
+        if (d2 < STACK_MERGE_DISTANCE**2) {
+          if (!bestStack || stack.zindex > maxZ) {
+            maxZ = stack.zindex;
+            bestStack = obj;
           }
-        });
+        }
+      });
+      return bestStack;
+    },
+    isStackable(obj) {
+      return obj && obj.tokens.length > 0 && obj.tokens[0].type === 'card'; // TODO
+    },
+    moveToken({ tokenId, stackId, position }) {
+      const detachedToken = tokenId && this.tokens[tokenId];
+      const sourceStack = (tokenId &&
+        this.stackedTokens[this.tokens[tokenId].stackId])
+          || this.stackedTokens[stackId];
+
+      const targetStack = this.isStackable(sourceStack) &&
+        this.findTargetStack(position);
+
+      let change = [];
+      let sourceRemoved = false;
+
+      if (sourceStack && targetStack && sourceStack.stack.id === targetStack.stack.id) {
+        // same stack
+        console.log('same stack');
+        change = [{
+          type: 'stacks',
+          id: sourceStack.stack.id,
+          properties: {
+            zindex: this.maxZIndex + 1, // TODO: hacky
+            remoteDrag: null
+          }
+        }];
+      }
+      else if (targetStack) {
+        // stack on top of existing
+        const movedTokens = detachedToken ?
+          [detachedToken] :
+          sourceStack.tokens;
+
+        let stackPos = this.maxStackPosition + 10;
+        console.log(`moving ${movedTokens.length} tokens to stack ${targetStack.stack.id}, starting stack pos ${stackPos}`);
+
+        change = movedTokens.map(token => ({
+          type: 'tokens',
+          id: token.id,
+          properties: {
+            stackId: targetStack.stack.id,
+            stackPosition: stackPos++
+          }
+        }));
+
+        if (!detachedToken) {
+          console.log('removing source stack');
+          sourceRemoved = true;
+          change.push({
+            type: 'stacks',
+            id: sourceStack.stack.id,
+            properties: null
+          });
+        }
+      }
+      else {
+        console.log(`moving stack ${stackId}`);
+        change = [{
+          type: 'stacks',
+          id: stackId,
+          properties: {
+            id: stackId, // needed if a new stack is added
+            position,
+            zindex: this.maxZIndex + 1,
+            remoteDrag: null
+          }
+        }];
+
+        if (detachedToken) {
+          console.log(`creating new stack ${stackId}`);
+          // new stack
+          change.push({
+            type: 'tokens',
+            id: tokenId,
+            properties: {
+              stackId,
+              stackPosition: this.maxStackPosition + 1
+            }
+          });
+        }
+      }
+
+      if (!sourceRemoved) {
         change.push({
           type: 'stacks',
-          id: this.tokens[tokenId].stackId,
+          id: sourceStack.stack.id,
           properties: {
             remoteDrag: null
           }
-        })
+        });
       }
-      this.$store.commitTagged('alterItems', change);
+
+      if (change.length > 0) this.$store.commitTagged('alterItems', change);
     },
     dragToken({ stackId, drag }) {
       this.$store.commitTagged('alterItems', [{
