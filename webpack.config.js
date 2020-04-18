@@ -1,6 +1,11 @@
 const path = require('path');
+const webpack = require('webpack');
 const CopyPlugin = require('copy-webpack-plugin');
 const VueLoaderPlugin = require('vue-loader/lib/plugin');
+
+const buildConfig = {
+  backend: `'${process.env.BACKEND}'`
+};
 
 module.exports = {
   entry: './src/index.js',
@@ -25,7 +30,10 @@ module.exports = {
     new CopyPlugin([
       { from: 'index.html', to: 'index.html' },
       { from: 'style.css', to: 'style.css' }
-    ])
+    ]),
+    new webpack.DefinePlugin({
+      BUILD_CONFIG: buildConfig
+    })
   ],
   resolve: {
     alias: {

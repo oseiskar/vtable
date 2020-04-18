@@ -5,6 +5,9 @@
     "copy-webpack-plugin": "^5.1.1",
     "crypto-random-string": "^3.2.0",
     "firebase": "^7.13.1",
+    "koa": "^2.11.0",
+    "koa-router": "^8.0.8",
+    "koa-static": "^5.0.0",
     "uuid": "^7.0.2",
     "v-click-outside": "^3.0.1",
     "vue": "^2.6.11",
@@ -23,8 +26,9 @@
     "firebase-tools": "^7.16.1"
   },
   "scripts": {
-    "build": "webpack --mode=production",
-    "watch": "webpack --mode=development --watch=true",
+    "build": "BACKEND=node webpack --mode=production",
+    "build:firebase": "BACKEND=firebase webpack --mode=production",
+    "watch": "BACKEND=node webpack --mode=development --watch=true",
     "lint": "./node_modules/.bin/eslint src/"
   }
 }
