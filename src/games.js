@@ -1,3 +1,5 @@
+const customGame = require('../digitizer/output/custom');
+
 const defaults = {
   boardW: 600,
   boardH: 600
@@ -155,5 +157,6 @@ function stackEachSeparately(game) {
 
 module.exports = [
   generateDeck(),
-  stackEachSeparately(generateChess())
+  stackEachSeparately(generateChess()),
+  customGame
 ].map(convertToRuntimeModel);
