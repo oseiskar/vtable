@@ -361,11 +361,17 @@ module.exports = {
     }
   },
   watch: {
-    name() {
-      document.title = `${this.$store.state.game.name} | vtable`;
+    name: {
+      immediate: true,
+      handler(value) {
+        document.title = `${value} | vtable`;
+      }
     },
-    id(value) {
-      if (value) window.location.hash = value;
+    id: {
+      immediate: true,
+      handler(value) {
+        if (value) window.location.hash = value;
+      }
     }
   }
 };

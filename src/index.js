@@ -24,7 +24,7 @@ function start() {
         data: () => ({
           identity: {
             id: playerId,
-            name: null
+            name: store.singlePlayer ? 'single' : null
           }
         }),
         components: { Game },

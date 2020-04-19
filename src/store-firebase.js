@@ -51,7 +51,7 @@ function firebaseStore(initialState, gameId) {
       actions: {
         init: firestoreAction((context) => {
           const setState = initialState
-            ? gameRef.set({ ...initialState, id: gameId })
+            ? gameRef.set({ ...initialState })
             : Promise.resolve(true);
 
           return setState.then(() => context.bindFirestoreRef('game', gameRef, { maxRefDepth: 10 }));
@@ -68,4 +68,13 @@ function firebaseStore(initialState, gameId) {
   });
 }
 
-module.exports = firebaseStore;
+module.exports = (playerId, initialState, gameId) => {
+  const storePromise = firebaseStore(initialState, gameId);
+  return storePromise.then((s) => {
+    const store = s;
+    store.commitTagged = (mutationType, mutationPayload) => {
+      store.commit(mutationType, mutationPayload);
+    };
+    return store;
+  });
+};

@@ -8,6 +8,7 @@
     "koa": "^2.11.0",
     "koa-router": "^8.0.8",
     "koa-static": "^5.0.0",
+    "koa-websocket": "^6.0.0",
     "uuid": "^7.0.2",
     "v-click-outside": "^3.0.1",
     "vue": "^2.6.11",
@@ -26,9 +27,9 @@
     "firebase-tools": "^7.16.1"
   },
   "scripts": {
-    "build": "BACKEND=node webpack --mode=production",
-    "build:firebase": "BACKEND=firebase webpack --mode=production",
-    "watch": "BACKEND=node webpack --mode=development --watch=true",
+    "build": "webpack --mode=production",
+    "watch": "webpack --mode=development --watch=true",
+    "server": "node server.js & BACKEND=node webpack --mode=development --watch=true",
     "lint": "./node_modules/.bin/eslint src/"
   }
 }
