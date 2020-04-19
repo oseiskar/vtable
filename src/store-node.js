@@ -55,7 +55,7 @@ module.exports = (playerId, originalInitialState, gameId) => openWebSocket(gameI
     }).then((s) => {
       const store = s;
       store.commitTagged = (type, payload) => {
-        store.commit(type, payload);
+        // store.commit(type, payload);
         websocket.send(JSON.stringify({ mutation: { type, payload } }));
       };
       return store;

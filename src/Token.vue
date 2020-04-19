@@ -129,6 +129,7 @@ module.exports = {
     tokenClass(token, index) {
       return {
         [`token-${token.type}`]: true,
+        'token-bottom': index === 0,
         'has-context-menu': token.type === 'card',
         'token-drag-active': index === this.tokens.length - 1 && this.animDrag.active && !this.animDrag.stack
       };

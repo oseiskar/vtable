@@ -3,7 +3,7 @@ Convert a set of images in a folder to a game JSON
 """
 import base64, cv2, json, os, re
 
-def process_folder(input_folder, output_file, name, wrap_as_js_module=True):
+def process_folder(input_folder, output_file, name, wrap_as_js_module=True, scale=1.0):
     cards = []
     back = None
     h, w = None, None
@@ -29,15 +29,19 @@ def process_folder(input_folder, output_file, name, wrap_as_js_module=True):
                 'type': 'card',
                 'faceDown': True,
                 'dimensions': {
-                    'width': w,
-                    'height': h
+                    'width': w * scale,
+                    'height': h * scale
                 },
                 'style': {
-                  'background-image': "url('%s')" % data
+                  'background-image': "url('%s')" % data,
+                  'background-repeat': 'no-repeat',
+                  'background-size': 'cover'
                 },
                 'back': {
                     'style': {
-                      'background-image': "url('%s')" % back
+                      'background-image': "url('%s')" % back,
+                      'background-repeat': 'no-repeat',
+                      'background-size': 'cover'
                     }
                 },
                 'stackId': 1
@@ -50,8 +54,8 @@ def process_folder(input_folder, output_file, name, wrap_as_js_module=True):
             1: {
                 'id': 1,
                 'position': {
-                    'x': w*2,
-                    'y': h*2
+                    'x': 100,
+                    'y': 100
                 }
             }
         }
@@ -68,7 +72,10 @@ if __name__ == '__main__':
     p = argparse.ArgumentParser(__doc__)
     p.add_argument('input_folder')
     p.add_argument('output_file')
-    p.add_argument('--name', default='Custom game')
+    p.add_argument('--name', default='Custom game',
+        help='The name of the game')
+    p.add_argument('-s', '--scale', type=float, default=1.0,
+        help='Scale the images with this factor using CSS (downscaling helps retina displays and zooming)')
     p.add_argument('-js', '--wrap_as_js_module', action='store_true')
     args = p.parse_args()
 

@@ -47,8 +47,8 @@ function Game() {
       receive(msg) {
         if (apply(msg)) {
           for (let i = 0; i < channels.length; ++i) {
-            // broadcast to others
-            if (i !== this.id && channels[i]) channels[i].send(msg);
+            // broadcast to all
+            if (channels[i]) channels[i].send(msg);
           }
         }
       },

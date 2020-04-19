@@ -128,6 +128,7 @@ function convertToRuntimeModel(game) {
     tokens[newToken.id] = newToken;
     const stack = game.stacks[newToken.stackId];
     stack.zindex = newToken.id;
+    stack.remoteDrag = 0;
   });
 
   const newGame = { ...game };

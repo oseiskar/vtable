@@ -51,7 +51,7 @@ function firebaseStore(initialState, gameId) {
       actions: {
         init: firestoreAction((context) => {
           const setState = initialState
-            ? gameRef.set({ ...initialState })
+            ? gameRef.set({ ...initialState, id: gameId })
             : Promise.resolve(true);
 
           return setState.then(() => context.bindFirestoreRef('game', gameRef, { maxRefDepth: 10 }));

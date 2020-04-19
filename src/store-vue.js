@@ -16,7 +16,7 @@ function vuexStore(initialState) {
         items.forEach(({ type, id, properties }) => {
           const coll = state.game[type];
           if (properties === null) {
-            delete coll[id];
+            Vue.delete(coll, id);
             return;
           }
           const item = coll[id];

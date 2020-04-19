@@ -137,7 +137,7 @@ module.exports = {
               delete stack.remoteDrag;
               if (remoteDrag && remoteDrag.source === this.identity.id) {
                 // ignore own drag events
-                remoteDrag = undefined;
+                remoteDrag = 0;
               }
               stacked[token.stackId] = {
                 remoteDrag,
@@ -178,7 +178,7 @@ module.exports = {
         }
       });
     },
-    findTargetStack(position) {
+    findTargetStack(position, excludedStackId) {
       function dist2(p0, stackBase, nStack, d) {
         const p1 = {
           x: stackBase.x + d.x * (nStack - 1),
@@ -191,6 +191,7 @@ module.exports = {
       Object.values(this.stackedTokens).forEach(obj => {
         const { stack, dx, dy, tokens } = obj;
         if (!this.isStackable(obj)) return;
+        if (stack.id === excludedStackId) return;
         const d2 = dist2(position, stack.position, tokens.length, { x: dx, y: dy });
         if (d2 < STACK_MERGE_DISTANCE**2) {
           if (!bestStack || stack.zindex > maxZ) {
@@ -211,20 +212,19 @@ module.exports = {
           || this.stackedTokens[stackId];
 
       const targetStack = this.isStackable(sourceStack) &&
-        this.findTargetStack(position);
+        this.findTargetStack(position, detachedToken ? null : sourceStack.stack.id);
 
       let change = [];
       let sourceRemoved = false;
 
       if (sourceStack && targetStack && sourceStack.stack.id === targetStack.stack.id) {
-        // same stack
         console.log('same stack');
         change = [{
           type: 'stacks',
           id: sourceStack.stack.id,
           properties: {
             zindex: this.maxZIndex + 1, // TODO: hacky
-            remoteDrag: null
+            remoteDrag: 0
           }
         }];
       }
@@ -265,7 +265,7 @@ module.exports = {
             id: stackId, // needed if a new stack is added
             position,
             zindex: this.maxZIndex + 1,
-            remoteDrag: null
+            remoteDrag: 0 // TODO: hacky
           }
         }];
 
@@ -288,7 +288,7 @@ module.exports = {
           type: 'stacks',
           id: sourceStack.stack.id,
           properties: {
-            remoteDrag: null
+            remoteDrag: 0
           }
         });
       }
@@ -330,7 +330,32 @@ module.exports = {
         },
         options: []
       };
-      if (token) {
+      if (stack) {
+        menu.options = [
+          {
+            name: 'Flip stack', // TODO: duplicate
+            action: () => this.$store.commitTagged('alterItems', stack.tokens.map((token) => ({
+              type: 'tokens',
+              id: token.id,
+              properties: {
+                faceDown: !token.faceDown,
+                stackPosition: -token.stackPosition
+              }
+            })))
+          },
+          {
+            name: 'Shuffle',
+            action: () => this.$store.commitTagged('alterItems', stack.tokens.map((token) => ({
+              type: 'tokens',
+              id: token.id,
+              properties: {
+                stackPosition: Math.random()
+              }
+            })))
+          },
+        ];
+      }
+      else if (token) {
         menu.options.push({
           name: 'Flip',
           action: () => this.$store.commitTagged('alterItems', [{
@@ -340,18 +365,6 @@ module.exports = {
               faceDown: !token.faceDown
             }
           }])
-        });
-      }
-      if (stack) {
-        menu.options.push({
-          name: 'Shuffle',
-          action: () => this.$store.commitTagged('alterItems', stack.tokens.map((token) => ({
-            type: 'tokens',
-            id: token.id,
-            properties: {
-              stackPosition: Math.random()
-            }
-          })))
         });
       }
       return menu;
