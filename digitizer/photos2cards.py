@@ -50,7 +50,7 @@ def process_single(in_file, out_file, mask_rect, box_blur_width=1, normalize=Fal
     if normalize:
         gray = np.mean(img, axis=2)
         if normalize_quantile > 0.0:
-            q =normalize_quantile
+            q = normalize_quantile
             min = np.quantile(gray, q)
             max = np.quantile(gray, 1.0-q)
         else:

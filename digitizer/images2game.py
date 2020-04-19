@@ -11,7 +11,7 @@ def process_folder(input_folder, output_file, name, wrap_as_js_module=True):
         in_file = os.path.join(input_folder, f)
         ext = in_file.split('.')[-1]
         with open(in_file, 'rb') as f:
-            encoded = base64.b64encode(f.read())
+            encoded = base64.b64encode(f.read()).decode('ascii')
         if re.match(r'jpe?g', ext):
             mime = 'jpeg'
         elif ext == 'png':
