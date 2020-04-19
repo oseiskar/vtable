@@ -27,6 +27,7 @@
       </div>
     </div>
     <div class="context-menu" v-if="contextMenu" :style="contextMenu.style" v-click-outside="closeContextMenu">
+      <p v-if="contextMenu.title" class="context-menu-title">{{ contextMenu.title }}</p>
       <div class="list-group">
         <a v-for="option in contextMenu.options"
           href="javascript:void(0)"
@@ -95,23 +96,10 @@ module.exports = {
       return Math.ceil(max); // shuffle uses random floats
     },
     nextPlayerTokenPosition() {
-      const dims = this.boardDims;
-      const center = { x: dims.width / 2 - 50, y: dims.height / 2 - 30 };
       const nExisting = Object.values(this.players).length;
-      let angle = 0;
-      switch (nExisting) {
-        case 0: angle = 0; break;
-        case 1: angle = 180; break;
-        case 2: angle = 270; break;
-        case 3: angle = 90; break;
-        default: angle = Math.random() * 360;
-      }
-      const arad = (90 - angle) / 180 * Math.PI;
-      const Rx = dims.width / 2 + 100;
-      const Ry = dims.height / 2 + 50;
       return {
-        x: Rx * Math.cos(arad) + center.x,
-        y: Ry * Math.sin(arad) + center.y
+        x: 40,
+        y: 100*nExisting
       };
     },
     nextPlayerColor() {
@@ -142,9 +130,7 @@ module.exports = {
               stacked[token.stackId] = {
                 remoteDrag,
                 stack,
-                tokens: [token],
-                dx: STACK_DX,
-                dy: STACK_DY
+                tokens: [token]
               };
             } else {
               stacked[token.stackId].tokens.push(token);
@@ -154,6 +140,9 @@ module.exports = {
             stack.tokens.sort((a, b) => {
               return a.stackPosition - b.stackPosition
             });
+            dScale = 1.0 / (1.0 + stack.tokens.length*0.1);
+            stack.dx = STACK_DX * dScale;
+            stack.dy = STACK_DY * dScale;
           });
         }
         return stacked;
@@ -174,7 +163,8 @@ module.exports = {
         stack: {
           id: `stack-${this.identity.id}`,
           position: this.nextPlayerTokenPosition,
-          zindex: this.maxZIndex
+          zindex: this.maxZIndex,
+          remoteDrag: 0
         }
       });
     },
@@ -331,6 +321,7 @@ module.exports = {
         options: []
       };
       if (stack) {
+        menu.title = `${stack.tokens.length} cards`;
         menu.options = [
           {
             name: 'Flip stack', // TODO: duplicate

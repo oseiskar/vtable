@@ -97,3 +97,13 @@ body {
   background: white;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
+
+.context-menu-title {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 0;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  color: #a0a0a0;
+}
