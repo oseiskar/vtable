@@ -29,7 +29,9 @@
 #### Node version
 
     BACKEND=node npm run build
-    # TODO
+    BIND_IP=0.0.0.0 node server.js
+    # go to http://YOUR_IP_ADDRESS:3000
+    # can be checked with, e.g.: curl -4 ifconfig.co
 
 ## Card digitizer
 
