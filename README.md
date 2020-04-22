@@ -52,3 +52,13 @@
         python digitizer/images2game.py \
           digitizer/photos/output \
           digitizer/output/custom.js -js --name='My Custom Game'
+
+## TODO / Known issues
+
+ - [ ] Fix "card stuck in remote drag state"
+ - [ ] Add personal cursor
+ - [ ] Detach card faster from stack to allow multiple users to draw cards almost simultaneously
+ - [ ] Help fast stacking to discard piles
+ - [ ] Add HTTPS/WSS support in local server
+ - [ ] Preload assets (images)
+ - [ ] Refactoring: more clearly defined responsibilities for Game/Token etc
