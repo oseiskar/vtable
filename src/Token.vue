@@ -53,7 +53,7 @@ module.exports = {
   components: {
     Moveable
   },
-  props: [ 'stack', 'tokens', 'remoteDrag', 'dx', 'dy' ],
+  props: [ 'stack', 'tokens', 'remoteDrag', 'dx', 'dy', 'zoomedTokenId' ],
   data: () => ({
     moveable: {
       draggable: true,
@@ -114,7 +114,7 @@ module.exports = {
       if (drag.stack && drag.active) pos = drag.position;
 
       let zindex = this.zindex;
-      if (drag.active) {
+      if (drag.active || this.zoomedTokenId == this.tokens[this.tokens.length - 1].id) {
         zindex = 1000000 - 1;
       }
 
@@ -153,6 +153,10 @@ module.exports = {
         ...token.style,
         ...faceStyle
       };
+
+      if (token.id === this.zoomedTokenId) {
+        style.transform = 'scale(2.0)';
+      }
 
       if (token.dimensions) {
         const { width, height } = token.dimensions;

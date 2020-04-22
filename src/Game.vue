@@ -59,7 +59,8 @@ module.exports = {
   components: { Token },
   data: () => ({
     nameInput: '',
-    contextMenu: null
+    contextMenu: null,
+    zoomedTokenId: null
   }),
   props: [ 'identity' ],
   computed: {
@@ -143,6 +144,8 @@ module.exports = {
             dScale = 1.0 / (1.0 + stack.tokens.length*0.1);
             stack.dx = STACK_DX * dScale;
             stack.dy = STACK_DY * dScale;
+
+            stack.zoomedTokenId = this.zoomedTokenId;
           });
         }
         return stacked;
@@ -286,6 +289,7 @@ module.exports = {
       if (change.length > 0) this.$store.commitTagged('alterItems', change);
     },
     dragToken({ stackId, drag }) {
+      this.zoomedTokenId = null;
       this.$store.commitTagged('alterItems', [{
         type: 'stacks',
         id: stackId,
@@ -356,6 +360,15 @@ module.exports = {
               faceDown: !token.faceDown
             }
           }])
+        });
+      }
+      if (token) {
+        const isZoomed = this.zoomedTokenId === token.id;
+        menu.options.push({
+          name: isZoomed ? 'Unzoom' : 'Zoom',
+          action: () => {
+            this.zoomedTokenId = isZoomed ? null : token.id;
+          }
         });
       }
       return menu;

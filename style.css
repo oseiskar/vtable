@@ -63,7 +63,7 @@ body {
   height: 100%;
   background: rgba(255, 255, 255, 0.8);
   overflow: hidden;
-  z-index: 100000;
+  z-index: 1000000;
 }
 
 .game-modal {
@@ -96,6 +96,7 @@ body {
   display: inline-block;
   background: white;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  z-index: 1000000 !important;
 }
 
 .context-menu-title {
