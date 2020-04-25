@@ -179,14 +179,15 @@ module.exports = {
         };
         return (p1.x - p0.x)**2 + (p1.y - p0.y)**2;
       }
-      const STACK_MERGE_DISTANCE = 20; // pixels
+      const MIN_MERGE_DISTANCE = 20; // pixels
       let maxZ, bestStack = null;
       Object.values(this.stackedTokens).forEach(obj => {
         const { stack, dx, dy, tokens } = obj;
         if (!this.isStackable(obj)) return;
         if (stack.id === excludedStackId) return;
+        const mergeDist = Math.max(MIN_MERGE_DISTANCE, tokens.length*Math.max(dx, dy)*2);
         const d2 = dist2(position, stack.position, tokens.length, { x: dx, y: dy });
-        if (d2 < STACK_MERGE_DISTANCE**2) {
+        if (d2 < mergeDist**2) {
           if (!bestStack || stack.zindex > maxZ) {
             maxZ = stack.zindex;
             bestStack = obj;
