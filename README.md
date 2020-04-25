@@ -55,7 +55,7 @@
 
 ## TODO / Known issues
 
- - [ ] Fix "card stuck in remote drag state"
+ - [ ] Fix "card stuck in remote drag state" (TODO: check, may be fixed by Socket.IO)
  - [ ] Add personal cursor
  - [ ] Detach card faster from stack to allow multiple users to draw cards almost simultaneously
  - [ ] Help fast stacking to discard piles

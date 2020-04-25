@@ -1,22 +1,23 @@
 const Koa = require('koa');
-const KoaRouter = require('koa-router');
-const websockify = require('koa-websocket');
+const IO = require('koa-socket-2');
 const Vue = require('vue');
 const Vuex = require('vuex');
 const Store = require('./src/store-vue');
 
 Vue.use(Vuex);
 
-const app = websockify(new Koa());
+const app = new Koa();
+const io = new IO();
 app.use(require('koa-static')('build'));
+
+io.attach(app);
 
 const games = {};
 
 function Game() {
   let store = null;
-  const channels = [];
 
-  function apply(msg) {
+  this.apply = (msg) => {
     const { initialState, mutation } = msg;
     if (initialState) {
       if (store) {
@@ -38,26 +39,6 @@ function Game() {
     }
     console.warn(`unprocessable message ${JSON.stringify(msg)}`);
     return false;
-  }
-
-  this.join = (send) => {
-    const channel = {
-      send,
-      id: channels.length,
-      receive(msg) {
-        if (apply(msg)) {
-          for (let i = 0; i < channels.length; ++i) {
-            // broadcast to all
-            if (channels[i]) channels[i].send(msg);
-          }
-        }
-      },
-      disconnect() {
-        channels[this.id] = null;
-      }
-    };
-    channels.push(channel);
-    return channel;
   };
 
   this.getState = () => {
@@ -68,46 +49,31 @@ function Game() {
   };
 }
 
-app.ws.use(new KoaRouter().all('/games/:gameId', (ctx) => {
-  const { gameId } = ctx.params;
-  const clientAddr = ctx.request.ip;
-  console.log(`new websocket connection from ${clientAddr} for game ${gameId}`);
-  if (games[gameId]) {
-    console.log('joining existing game');
-    const state = games[gameId].getState();
-    if (state) {
-      console.log('sending current state');
-      ctx.websocket.send(JSON.stringify({ initialState: state }));
+io.on('connection', (socket) => {
+  const clientAddr = socket.id;
+  console.log(`new connection from ${clientAddr}`);
+  socket.on('join', (gameId) => {
+    console.log(`${clientAddr} joins game ${gameId}`);
+    socket.join(gameId);
+    if (games[gameId]) {
+      console.log('joining existing game');
+      const state = games[gameId].getState();
+      if (state) {
+        console.log('sending current state');
+        socket.emit('gameMsg', { initialState: state });
+      }
+    } else {
+      console.log('creating a new game');
+      games[gameId] = new Game();
     }
-  } else {
-    console.log('creating a new game');
-    games[gameId] = new Game();
-  }
-  const game = games[gameId];
-  const channel = game.join((msg) => {
-    ctx.websocket.send(JSON.stringify(msg));
+    socket.on('gameMsg', (msg) => {
+      if (games[gameId].apply(msg)) {
+        io.to(gameId).emit('gameMsg', msg);
+      }
+    });
   });
-  ctx.websocket.on('message', (msg) => {
-    let parsed;
-    try {
-      parsed = JSON.parse(msg);
-    } catch (err) {
-      console.error(`unprocessable message from ${clientAddr}: ${msg}`);
-      channel.send({ error: 'unprocessable' });
-      channel.disconnect();
-      return;
-    }
-    channel.receive(parsed);
-  });
-  ctx.websocket.on('error', () => {
-    console.log(`${clientAddr} disconnected (error)`);
-    channel.disconnect();
-  });
-  ctx.websocket.on('close', () => {
-    console.log(`${clientAddr} disconnected (close)`);
-    channel.disconnect();
-  });
-}).routes());
+  // TODO: error handling
+});
 
 const PORT = process.env.PORT || 3000;
 const BIND_IP = process.env.BIND_IP || '127.0.0.1';

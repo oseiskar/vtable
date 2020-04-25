@@ -1,11 +1,14 @@
+const io = require('socket.io-client');
 const localStore = require('./store-vue.js');
 
-function openWebSocket(gameId) {
-  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+function openConnection(gameId) {
   return new Promise((resolve, reject) => {
-    const websocket = new WebSocket(`${protocol}://${window.location.host}/games/${gameId}`);
-    websocket.onopen = () => resolve(websocket);
-    websocket.onerror = reject;
+    const socket = io.connect();
+    socket.on('connect', () => {
+      socket.emit('join', gameId);
+      resolve(socket);
+    });
+    socket.on('connect_failed', () => reject(new Error('Connection failed')));
   });
 }
 
@@ -13,23 +16,21 @@ function wsError(msg) {
   alert(`${msg}, please check your internet connection and reload the page`);
 }
 
-module.exports = (playerId, originalInitialState, gameId) => openWebSocket(gameId)
-  .then((ws) => {
-    const websocket = ws;
+module.exports = (playerId, originalInitialState, gameId) => openConnection(gameId)
+  .then((sock) => {
+    const socket = sock;
     return new Promise((resolve, reject) => {
       let store;
       if (originalInitialState) {
         const initialStateWithId = { ...originalInitialState, id: gameId };
         store = localStore(initialStateWithId);
-        websocket.send(JSON.stringify({ initialState: initialStateWithId }));
+        socket.emit('gameMsg', { initialState: initialStateWithId });
       }
 
-      websocket.onmessage = ({ data }) => {
-        console.log(`received ${data} over websocket`);
-        const { mutation, error, initialState } = JSON.parse(data);
+      socket.on('gameMsg', ({ mutation, error, initialState }) => {
         if (initialState) {
           if (store) {
-            throw new Error('already initialized');
+            console.log('ignoring initial state: already initialized');
           } else {
             console.log('initializing with remote state');
             const { game } = initialState;
@@ -46,17 +47,19 @@ module.exports = (playerId, originalInitialState, gameId) => openWebSocket(gameI
           wsError(`Error: ${error}`);
         }
         return null;
-      };
+      });
 
-      websocket.onclose = () => wsError('Connection lost');
-      websocket.onerror = wsError;
+      // TODO: which one, or both?
+      socket.on('disconnect', () => wsError('Connection lost'));
+      socket.on('reconnect_failed', () => wsError('Connection lost'));
+      socket.on('error', wsError);
 
       if (store) resolve(store);
     }).then((s) => {
       const store = s;
       store.commitTagged = (type, payload) => {
         // store.commit(type, payload);
-        websocket.send(JSON.stringify({ mutation: { type, payload } }));
+        socket.emit('gameMsg', { mutation: { type, payload } });
       };
       return store;
     });
