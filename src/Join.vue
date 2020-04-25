@@ -24,7 +24,7 @@ module.exports = {
   data: () => ({
     nameInput: ''
   }),
-  props: [ 'identity', 'nExisting', 'maxZIndex' ],
+  props: [ 'identity', 'nExistingPlayers', 'maxZIndex' ],
   computed: {
     link() {
       return window.location.href;
@@ -32,7 +32,7 @@ module.exports = {
     nextPlayerTokenPosition() {
       return {
         x: 40,
-        y: 100*this.nExisting
+        y: 100*this.nExistingPlayers
       };
     },
     nextPlayerColor() {
