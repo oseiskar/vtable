@@ -113,10 +113,10 @@ body {
   position: absolute;
   display: block;
   z-index: 1000000;
+  border: 1px solid black;
 }
 
 .remote-cursor-cursor {
-  border: 1px solid black;
   width: 1em;
   height: 1em;
   border-radius: 0.5em;
