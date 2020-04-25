@@ -23,21 +23,46 @@ def load_mask(mask_image):
 
     return (x0, x1, y0, y1)
 
-def rotate_image(img, deg):
+def rotate_image(img, deg, mask_rect):
     deg = -deg # CW -> CCW
+    h, w =  img.shape[:2]
 
+    (x0, x1, y0, y1) = mask_rect
     rots_90 = np.round(deg / 90)
+
     img = np.rot90(img, rots_90)
     deg = deg - rots_90*90
+    rots_90 = rots_90 % 4
 
-    h, w =  img.shape[:2]
-    M = cv2.getRotationMatrix2D((w*0.5, h*0.5), deg, scale=1.0)
-    return cv2.warpAffine(img, M, (w, h))
+    # rotate mask rect (quite ugly)
+    while rots_90 != 0:
+        w, h = h, w
+        if rots_90 > 0:
+            f = lambda x, y: (y, h-x)
+            rots_90 -= 1
+        else:
+            f = lambda x, y: (w-y, x)
+            rots_90 += 1
+        x0, y0 = f(x0, y0)
+        x1, y1 = f(x1, y1)
+
+    x0, x1 = min(x0, x1), max(x0, x1)
+    y0, y1 = min(y0, y1), max(y0, y1)
+    mask_rect = (x0, x1, y0, y1)
+
+    if deg != 0:
+        M = cv2.getRotationMatrix2D(((x0+x1)*0.5, (y0+y1)*0.5), deg, scale=1.0)
+        img = cv2.warpAffine(img, M, (w, h))
+
+    return img, mask_rect
 
 def process_single(in_file, out_file, mask_rect, box_blur_width=1, normalize=False, normalize_quantile=0.0, width=0, rotation=0.0):
     print(in_file, out_file)
     in_mat = cv2.imread(in_file)
     assert(in_mat is not None)
+
+    if rotation != 0.0:
+        in_mat, mask_rect = rotate_image(in_mat, rotation, mask_rect)
 
     (x0, x1, y0, y1) = mask_rect
     img = in_mat[y0:y1, x0:x1, ...]
@@ -57,9 +82,6 @@ def process_single(in_file, out_file, mask_rect, box_blur_width=1, normalize=Fal
             min = np.min(gray)
             max = np.max(gray)
         img = np.minimum(255, np.maximum(0, (img - min) * 255 / (max - min)))
-
-    if rotation != 0.0:
-        img = rotate_image(img, rotation)
 
     if width > 0:
         img = cv2.resize(img, (width, img.shape[0]*width//img.shape[1]), cv2.INTER_AREA)
