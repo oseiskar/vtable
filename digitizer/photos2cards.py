@@ -56,32 +56,88 @@ def rotate_image(img, deg, mask_rect):
 
     return img, mask_rect
 
-def process_single(in_file, out_file, mask_rect, box_blur_width=1, normalize=False, normalize_quantile=0.0, width=0, rotation=0.0):
+def process_single(in_file, out_file, mask_rect,
+    box_blur_width=1,
+    normalize_quantile=-1,
+    width=0,
+    rotation=0.0,
+    auto_center_margin=0):
+
     print(in_file, out_file)
-    in_mat = cv2.imread(in_file)
-    assert(in_mat is not None)
+    img = cv2.imread(in_file)
+    assert(img is not None)
 
     if rotation != 0.0:
-        in_mat, mask_rect = rotate_image(in_mat, rotation, mask_rect)
+        img, mask_rect = rotate_image(img, rotation, mask_rect)
 
-    (x0, x1, y0, y1) = mask_rect
-    img = in_mat[y0:y1, x0:x1, ...]
+    def rect_with_margin(rect, margin):
+        (x0, x1, y0, y1) = mask_rect
+        x0m = max(x0 - margin, 0)
+        y0m = max(y0 - margin, 0)
+        x1m = min(x1 + margin, img.shape[1])
+        y1m = min(y1 + margin, img.shape[0])
+        return (x0m, x1m, y0m, y1m)
 
     if box_blur_width > 0:
+        x0b, x1b, y0b, y1b = rect_with_margin(mask_rect, box_blur_width + auto_center_margin)
         kernel = np.ones((box_blur_width, box_blur_width))
         kernel = kernel / np.sum(kernel)
-        img = cv2.filter2D(img, -1, kernel)
+        img[y0b:y1b, x0b:x1b, ...] = cv2.filter2D(img[y0b:y1b, x0b:x1b, ...], -1, kernel)
 
-    if normalize:
+    if auto_center_margin > 0:
+        (x0, x1, y0, y1) = mask_rect
+        w = x1 - x0
+        h = y1 - y0
+        x0b, x1b, y0b, y1b = rect_with_margin(mask_rect, auto_center_margin)
+        img = img[y0b:y1b, x0b:x1b, ...]
+        xrng = img.shape[1] - w
+        yrng = img.shape[0] - h
+
+        gray = np.mean(img, axis=2)
+        col_mean = np.ravel(np.mean(gray, axis=0))
+        row_mean = np.ravel(np.mean(gray, axis=1))
+        col_mid = 0.5*(np.max(col_mean)+np.min(col_mean))
+        row_mid = 0.5*(np.max(row_mean)+np.min(row_mean))
+
+        col_arr = col_mean > col_mid
+        row_arr = row_mean > row_mid
+        col_arr = np.hstack([col_arr[:xrng], col_arr[-xrng:]])
+        row_arr = np.hstack([row_arr[:yrng], row_arr[-yrng:]])
+
+        #import matplotlib.pyplot as plt
+        #plt.imshow(gray)
+        #plt.show()
+
+        def get_mid(arr, rng):
+            mid = 0.5*(np.max(arr)+np.min(arr))
+            arr = np.hstack([arr[:rng], arr[-rng:]])
+            changes = np.nonzero(np.diff(arr > mid))[0]
+            mid = np.ceil((changes[0] + changes[-1])*0.5)
+            #plt.plot(arr)
+            return int(round(mid / 2))
+
+        x0 = get_mid(col_mean, xrng)
+        y0 = get_mid(row_mean, yrng)
+
+        #plt.show()
+        x1 = x0+w
+        y1 = y0+h
+        mask_rect = (x0, x1, y0, y1)
+        #print(mask_rect)
+
+    (x0, x1, y0, y1) = mask_rect
+    img = img[y0:y1, x0:x1, ...]
+
+    if normalize_quantile >= 0.0:
         gray = np.mean(img, axis=2)
         if normalize_quantile > 0.0:
             q = normalize_quantile
-            min = np.quantile(gray, q)
-            max = np.quantile(gray, 1.0-q)
+            minb = np.quantile(gray, q)
+            maxb = np.quantile(gray, 1.0-q)
         else:
-            min = np.min(gray)
-            max = np.max(gray)
-        img = np.minimum(255, np.maximum(0, (img - min) * 255 / (max - min)))
+            minb = np.min(gray)
+            maxb = np.max(gray)
+        img = np.minimum(255, np.maximum(0, (img - minb) * 255 / (maxb - minb)))
 
     if width > 0:
         img = cv2.resize(img, (width, img.shape[0]*width//img.shape[1]), cv2.INTER_AREA)
@@ -106,9 +162,9 @@ if __name__ == '__main__':
     p.add_argument('output_folder')
     p.add_argument('mask_image')
     p.add_argument('-bb', '--box_blur_width', type=int, default=1)
-    p.add_argument('-n', '--normalize', action='store_true')
-    p.add_argument('-q', '--normalize_quantile', type=float, default=0.0)
+    p.add_argument('-n', '--normalize_quantile', type=float, default=-1)
     p.add_argument('-w', '--width', type=int, default=0)
+    p.add_argument('-a', '--auto_center_margin', type=int, default=0)
     p.add_argument('-r', '--rotation', type=float, default=0.0)
     args = p.parse_args()
 
