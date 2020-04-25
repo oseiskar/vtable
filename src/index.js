@@ -35,8 +35,10 @@ function start() {
             this.identity.name = name;
             console.log(`Joining as ${name}`);
             const existing = Object.values(store.state.game.players).find((p) => p.name === name);
-            if (!existing) {
-              // allow Claiming any existing player handle
+            if (existing) {
+              console.log(`Claiming player id ${existing.id}`);
+              this.identity.id = existing.id;
+            } else {
               console.log('Creating a new player');
               const { stack, ...player } = playerToken;
               this.$store.commitTagged('addItems', [

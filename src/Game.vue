@@ -99,9 +99,17 @@ module.exports = {
               const stack = { ...state.game.stacks[token.stackId] };
               let remoteDrag = stack.remoteDrag;
               delete stack.remoteDrag;
-              if (remoteDrag && remoteDrag.source === this.identity.id) {
-                // ignore own drag events
-                remoteDrag = 0;
+              if (remoteDrag) {
+                if (remoteDrag.source === this.identity.id) {
+                  // ignore own drag events
+                  remoteDrag = 0;
+                } else {
+                  remoteDrag.player = {
+                    stack: this.stacks[`stack-${remoteDrag.source}`],
+                    player: this.players[remoteDrag.source],
+                    token: this.tokens[remoteDrag.source]
+                  };
+                }
               }
               stacked[token.stackId] = {
                 remoteDrag,

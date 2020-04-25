@@ -63,7 +63,7 @@ body {
   height: 100%;
   background: rgba(255, 255, 255, 0.8);
   overflow: hidden;
-  z-index: 1000000;
+  z-index: 1000001;
 }
 
 .game-modal {
@@ -107,4 +107,23 @@ body {
   margin-top: 0.5em;
   margin-bottom: 0.5em;
   color: #a0a0a0;
+}
+
+.remote-cursor {
+  position: absolute;
+  display: block;
+  z-index: 1000000;
+}
+
+.remote-cursor-cursor {
+  border: 1px solid black;
+  width: 1em;
+  height: 1em;
+  border-radius: 0.5em;
+}
+
+.remote-cursor-dot {
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 0.25em;
 }

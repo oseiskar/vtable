@@ -1,22 +1,30 @@
 <template>
-  <Moveable
-    v-bind="moveable"
-    @drag="dragMove"
-    @dragEnd="dragEnd"
-    @dragStart="dragStart"
-    :class="dynamicClass"
-    :style="dynamicStyle">
-    <div v-for="token, index in tokens"
-      :class="tokenClass(token, index)"
-      :style="tokenStyle(token, index)"
-      :data-token-id='tokenIdAttr(token, index)'
-      :data-stack-id='stackIdAttr(token, index)'><span v-if='!token.faceDown'>{{ token.text }}</span></div>
-  </Moveable>
+  <div>
+    <Moveable
+      v-bind="moveable"
+      @drag="dragMove"
+      @dragEnd="dragEnd"
+      @dragStart="dragStart"
+      :class="dynamicClass"
+      :style="dynamicStyle">
+      <div v-for="token, index in tokens"
+        :class="tokenClass(token, index)"
+        :style="tokenStyle(token, index)"
+        :data-token-id='tokenIdAttr(token, index)'
+        :data-stack-id='stackIdAttr(token, index)'><span v-if='!token.faceDown'>{{ token.text }}</span></div>
+    </Moveable>
+    <RemoteCursor
+      v-if="remoteDrag && remoteDrag.player && animDrag"
+      v-bind:player="remoteDrag.player"
+      v-bind:position="cursorPosition">
+    </RemoteCursor>
+  </div>
 </template>
 
 <script>
 const Moveable = require('vue-moveable');
 const uuid = require('uuid');
+const RemoteCursor = require('./RemoteCursor.vue').default;
 
 const QUICK_DRAG_MILLISECONDS = 400;
 const DRAG_BROADCAST_INTERVAL_MILLIS = 300;
@@ -51,17 +59,11 @@ function animate(target, id = null) {
 
 module.exports = {
   components: {
-    Moveable
+    Moveable,
+    RemoteCursor
   },
   props: [ 'stack', 'tokens', 'remoteDrag', 'dx', 'dy', 'zoomedTokenId' ],
   data: () => ({
-    moveable: {
-      draggable: true,
-      throttleDrag: 0,
-      resizable: false,
-      scalable: false,
-      rotatable: false
-    },
     drag: {
       position: { x: 0, y: 0 },
       offset: { x: 0, y: 0 },
@@ -97,8 +99,27 @@ module.exports = {
     }
   },
   computed: {
+    moveable() {
+      return {
+        // TODO: this.remoteDrag can cause the card to be permanently stuck
+        draggable: true, // !this.remoteDrag,
+        throttleDrag: 0,
+        resizable: false,
+        scalable: false,
+        rotatable: false
+      }
+    },
     animDrag() {
       return this.drag;
+    },
+    cursorPosition() {
+      const pos = { ...this.animDrag.position };
+      if (this.tokens[0].dimensions) {
+        const { width, height } = this.tokens[0].dimensions;
+        pos.x += width * 0.5;
+        pos.y += height * 0.5;
+      }
+      return pos;
     },
     position() { return this.stack.position; },
     zindex() { return this.stack.zindex; },
