@@ -156,6 +156,20 @@ module.exports = {
     join(data) {
       this.$emit('join-game', data);
     },
+    onReinitialize() {
+      const clearDrags = Object.values(this.stacks)
+        .filter(stack => stack.remoteDrag && stack.remoteDrag.source === this.identity.id)
+        .map(stack => ({
+          type: 'stacks',
+          id: stack.id,
+          properties: { remoteDrag: 0 }
+        }));
+
+      if (clearDrags.length > 0) {
+        console.log(`reconnect: clearing ${clearDrags.length} remote drag(s)`);
+        this.$store.commitTagged('alterItems', clearDrags);
+      }
+    },
     findTargetStack(position, excludedStackId) {
       function dist2(p0, stackBase, nStack, d) {
         const p1 = {
@@ -270,6 +284,22 @@ module.exports = {
             remoteDrag: 0
           }
         });
+      }
+
+      const extraClears = Object.values(this.stacks)
+        .filter(stack => stack.remoteDrag &&
+          stack.remoteDrag.source === this.identity.id &&
+          (!sourceStack || stack.id !== sourceStack.stack.id) &&
+          stack.id !== stackId)
+        .map(stack => ({
+          type: 'stacks',
+          id: stack.id,
+          properties: { remoteDrag: 0 }
+        }));
+
+      if (extraClears.length > 0) {
+        console.log(`clearing extra ${extraClears.length} remote drag(s)`)
+        extraClears.forEach(c => change.push(c));
       }
 
       if (change.length > 0) this.$store.commitTagged('alterItems', change);

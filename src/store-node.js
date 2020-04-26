@@ -3,7 +3,7 @@ const localStore = require('./store-vue.js');
 
 function openConnection(gameId) {
   return new Promise((resolve, reject) => {
-    const socket = io(window.location.href, { reconnectionAttempts: 4 });
+    const socket = io(window.location.href, { reconnectionAttempts: 20 });
     socket.on('connect', () => {
       socket.emit('join', gameId);
       resolve(socket);
@@ -44,6 +44,9 @@ module.exports = (playerId, originalInitialState, gameId) => openConnection(game
             store.commit('reinitialize', initialState);
             if (store.onConnectionStatus) {
               store.onConnectionStatus({ connected: true });
+            }
+            if (store.onReinitialize) {
+              store.onReinitialize();
             }
           } else {
             console.log('initializing with remote state');

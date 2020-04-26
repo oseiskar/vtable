@@ -31,7 +31,7 @@ function start() {
           }
         }),
         components: { Game },
-        template: '<Game v-bind:identity="identity" v-bind:connection="connection" v-on:join-game="joinThisGame"></Game>',
+        template: '<Game ref="game" v-bind:identity="identity" v-bind:connection="connection" v-on:join-game="joinThisGame"></Game>',
         methods: {
           joinThisGame(playerToken) {
             const { text: name } = playerToken;
@@ -71,6 +71,9 @@ function start() {
           const s = store;
           s.onConnectionStatus = (msg) => {
             Vue.set(this, 'connection', msg);
+          };
+          s.onReinitialize = () => {
+            this.$refs.game.onReinitialize();
           };
           s.doInit().then(() => {
             console.log('Init success');

@@ -43,7 +43,6 @@
 
 ## TODO / Known issues
 
- - [ ] Fix "card stuck in remote drag state" (TODO: check, may be fixed by Socket.IO)
  - [ ] Detach card faster from stack to allow multiple users to draw cards almost simultaneously
  - [ ] Add HTTPS/WSS support in local server
  - [ ] Preload assets (images)
