@@ -25,10 +25,13 @@ function start() {
           identity: {
             id: playerId,
             name: store.singlePlayer ? 'single' : null
+          },
+          connection: {
+            connected: true
           }
         }),
         components: { Game },
-        template: '<Game v-bind:identity="identity" v-on:join-game="joinThisGame"></Game>',
+        template: '<Game v-bind:identity="identity" v-bind:connection="connection" v-on:join-game="joinThisGame"></Game>',
         methods: {
           joinThisGame(playerToken) {
             const { text: name } = playerToken;
@@ -65,7 +68,11 @@ function start() {
           }
         },
         created() {
-          store.doInit().then(() => {
+          const s = store;
+          s.onConnectionStatus = (msg) => {
+            Vue.set(this, 'connection', msg);
+          };
+          s.doInit().then(() => {
             console.log('Init success');
             resolve(true);
           });

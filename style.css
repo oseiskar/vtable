@@ -66,6 +66,13 @@ body {
   z-index: 1000001;
 }
 
+.connection-issue-msg {
+  width: 100%;
+  text-align: center;
+  margin-top: 10%;
+  font-size: 20px;
+}
+
 .game-modal {
   margin: 10%;
   background: white;

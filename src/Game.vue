@@ -8,12 +8,27 @@
         v-on:drag-token="dragToken"></Token>
       </div>
     </div>
-    <Join v-if="!identity.name"
-      v-bind:identity="identity"
-      v-bind:nExistingPlayers="nPlayers"
-      v-bind:maxZIndex="maxZIndex"
-      v-on:join-game="join">
-    </Join>
+    <div v-if="connection && !connection.connected" class="overlay overlay-error">
+      <div class="connection-issue-msg">
+        <p><b>{{ connection.message }}</b></p>
+        <p>
+          <span v-if="connection.permanent">
+            Please check your internet connection and reload the page
+          </span>
+          <i v-else>
+            Reconnecting...
+          </i>
+        </p>
+      </div>
+    </div>
+    <div v-else>
+      <Join v-if="!identity.name"
+        v-bind:identity="identity"
+        v-bind:nExistingPlayers="nPlayers"
+        v-bind:maxZIndex="maxZIndex"
+        v-on:join-game="join">
+      </Join>
+    </div>
     <div class="context-menu" v-if="contextMenu" :style="contextMenu.style" v-click-outside="closeContextMenu">
       <p v-if="contextMenu.title" class="context-menu-title">{{ contextMenu.title }}</p>
       <div class="list-group">
@@ -50,7 +65,7 @@ module.exports = {
     contextMenu: null,
     zoomedTokenId: null
   }),
-  props: [ 'identity' ],
+  props: [ 'identity', 'connection' ],
   computed: {
     boardDims() {
       return (this.board && this.board.dimensions) || {

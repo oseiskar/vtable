@@ -4,7 +4,7 @@ const Vuex = require('vuex');
 function vuexStore(initialState) {
   const store = new Vuex.Store({
     state: {
-      game: initialState
+      ...initialState
     },
     mutations: {
       addItems(state, items) {
@@ -32,6 +32,9 @@ function vuexStore(initialState) {
             }
           });
         });
+      },
+      reinitialize(state, { game }) {
+        Vue.set(state, 'game', game);
       }
     }
   });

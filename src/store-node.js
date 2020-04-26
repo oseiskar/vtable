@@ -3,17 +3,13 @@ const localStore = require('./store-vue.js');
 
 function openConnection(gameId) {
   return new Promise((resolve, reject) => {
-    const socket = io.connect();
+    const socket = io(window.location.href, { reconnectionAttempts: 4 });
     socket.on('connect', () => {
       socket.emit('join', gameId);
       resolve(socket);
     });
     socket.on('connect_failed', () => reject(new Error('Connection failed')));
   });
-}
-
-function wsError(msg) {
-  alert(`${msg}, please check your internet connection and reload the page`);
 }
 
 module.exports = (playerId, originalInitialState, gameId) => openConnection(gameId)
@@ -23,18 +19,35 @@ module.exports = (playerId, originalInitialState, gameId) => openConnection(game
       let store;
       if (originalInitialState) {
         const initialStateWithId = { ...originalInitialState, id: gameId };
-        store = localStore(initialStateWithId);
-        socket.emit('gameMsg', { initialState: initialStateWithId });
+        socket.emit('gameMsg', { initialState: { game: initialStateWithId } });
+      }
+
+      function errorHandler(event, message, permanent) {
+        console.warn(event);
+        if (store) {
+          if (store.onConnectionStatus) {
+            store.onConnectionStatus({
+              connected: false,
+              message,
+              permanent
+            });
+          }
+        } else if (permanent) {
+          reject(new Error(event));
+        }
       }
 
       socket.on('gameMsg', ({ mutation, error, initialState }) => {
         if (initialState) {
           if (store) {
-            console.log('ignoring initial state: already initialized');
+            console.log('reinitializing!');
+            store.commit('reinitialize', initialState);
+            if (store.onConnectionStatus) {
+              store.onConnectionStatus({ connected: true });
+            }
           } else {
             console.log('initializing with remote state');
-            const { game } = initialState;
-            store = localStore(game);
+            store = localStore(initialState);
             resolve(store);
           }
         }
@@ -44,17 +57,18 @@ module.exports = (playerId, originalInitialState, gameId) => openConnection(game
           store.commit(type, payload);
         }
         if (error) {
-          wsError(`Error: ${error}`);
+          errorHandler('game_error', `Game error: ${error}`, true);
         }
         return null;
       });
 
-      // TODO: which one, or both?
-      socket.on('disconnect', () => wsError('Connection lost'));
-      socket.on('reconnect_failed', () => wsError('Connection lost'));
-      socket.on('error', wsError);
+      function addErrorHandler(event, message, permanent) {
+        socket.on(event, () => errorHandler(event, message, permanent));
+      }
 
-      if (store) resolve(store);
+      addErrorHandler('disconnect', 'Disconnected', false);
+      addErrorHandler('error', 'Connection unstable', false);
+      addErrorHandler('reconnect_failed', 'Connection lost', true);
     }).then((s) => {
       const store = s;
       store.commitTagged = (type, payload) => {
