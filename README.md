@@ -14,19 +14,7 @@
     BACKEND=single npm run watch
     # open build/index.html in the browser
 
-#### Firebase version
-
-    BACKEND=firebase npm run watch
-    # open build/index.html in the browser
-
 ## Deployment
-
-#### Firebase version
-
-    BACKEND=firebase npm run build
-    firebase deploy
-
-#### Node version
 
     BACKEND=node npm run build
     BIND_IP=0.0.0.0 node server.js

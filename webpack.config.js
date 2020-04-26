@@ -18,10 +18,6 @@ module.exports = {
       {
         test: /\.vue$/,
         loader: 'vue-loader'
-      },
-      {
-        test: /\.firebaserc$/,
-        loader: 'json-loader'
       }
     ]
   },
